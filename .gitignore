@@ -1,0 +1,4 @@
+data/*.npy
+.*.swp
+__pycache__
+
