@@ -1,4 +1,4 @@
-# Toy (or not so toy) 2D n-body code for cosmology
+# 2D PM n-body code for cosmology
 
 ## Install
 

@@ -1,4 +1,7 @@
 data/*.npy
 .*.swp
 __pycache__
-
+notebooks
+.mypy_cache
+.vscode
+.entangled
