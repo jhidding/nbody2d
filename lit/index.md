@@ -9,6 +9,8 @@ This is a particle-mesh n-body code for cosmological n-body simulations. This co
 - Teaching: This code is very nice to play around with for students, since it is written in 100% Python.
 - Learning: Lastly, having 2D simulations can give a great deal of insight.
 
+![A sample simulation, three time steps; the bottom row is a zoom-in.](figures/x.collage.png)
+
 To run the code, you need to have installed:
 
 - Python 3.8
@@ -96,7 +98,7 @@ def G(self):
 
 We can now express the expansion factor as an initial value problem,
 
-$$\partial_t a(a) = H_0 a \sqrt{\Omega_{\Lambda} + \Omega_{m} a^{-3} + \Omega_{k} a^{-2}}.$$
+$$\partial_t a(a) = H_0 a \sqrt{\Omega_{\Lambda} + \Omega_{m} a^{-3} + \Omega_{k} a^{-2}}.$${#eq:frw}
 
 ``` {.python #cosmology-methods}
 def da(self, a):
@@ -297,7 +299,7 @@ class PoissonVlasov(HamiltonianSystem[np.ndarray]):
 
 The position equation:
 
-$$\partial_a x = \frac{p}{a^2 \dot{a}}$$
+$$\partial_a x = \frac{p}{a^2 \dot{a}}$${#eq:position}
 
 ``` {.python #position-equation}
 def positionEquation(self, s: State[np.ndarray]) -> np.ndarray:
@@ -308,11 +310,11 @@ def positionEquation(self, s: State[np.ndarray]) -> np.ndarray:
 
 The momentum equation:
 
-$$\partial_a p = -\frac{1}{\dot{a}} \nabla \Phi,$$
+$$\partial_a p = -\frac{1}{\dot{a}} \nabla \Phi,$${#eq:momentum}
 
 where
 
-$$\nabla^2 \Phi = \frac{G}{a} \delta.$$
+$$\nabla^2 \Phi = \frac{G}{a} \delta.$${#eq:poisson}
 
 We first compute $\delta$ using the cloud-in-cell mass deposition `md_cic()` function.
 Then we integrate twice by method of Fourier transform. To compute the accelleration we take the second-order approximation of the gradient function.
@@ -385,3 +387,92 @@ if __name__ == "__main__":
 
 # Constrained fields
 The `nbody.cft` library computes Gaussian random fields, and you can specify constraints on these fields.
+
+# Plotting the phase-space submanifold
+Instead of plotting particles, it is very nice to see the structures from phase-space. We take the original ordering of the particles at time $a=0$, and triangulate that. Then we plot this triangulation as it folds and wrinkles when particles start to move.
+
+For this visualisation we use Matplotlib.
+
+
+
+## The triangulation
+We split each grid volume cell into two triangles (upper and lower). The `box_triangles` function generates all triangles for a given `Box`. In this case we don't wrap around the edges, since that would make plotting a bit awkward.
+
+``` {.python #create-triangulation}
+def box_triangles(box):
+    idx = np.arange(box.size, dtype=int).reshape(box.shape)
+
+    x0 = idx[:-1,:-1]
+    x1 = idx[:-1,1:]
+    x2 = idx[1:,:-1]
+    x3 = idx[1:,1:]
+    upper_triangles = np.array([x0, x1, x2]).transpose([1,2,0]).reshape([-1,3])
+    lower_triangles = np.array([x3, x2, x1]).transpose([1,2,0]).reshape([-1,3])
+    return np.r_[upper_triangles, lower_triangles]
+```
+
+## Density
+To compute the density on the triangulation we take the inverse of each triangle's area. The area of a triangle can be computed using the formula,
+
+$$A = \frac{1}{2}(x_1 y_2 + x_2 y_3 + x_3 y_0 - x_2 y_1 - x_3 y_2 - x_0 y_3).$${#eq:triangle-area}
+
+``` {.python #triangle-area}
+def triangle_area(x, y, t):
+    return (x[t[:,0]] * y[t[:,1]] + x[t[:,1]] * y[t[:,2]] + x[t[:,2]] * y[t[:,0]] \
+          - x[t[:,1]] * y[t[:,0]] - x[t[:,2]] * y[t[:,1]] - x[t[:,0]] * y[t[:,2]]) / 2
+```
+
+## Plotting
+The `plot_for_time` function reads the data from the previously saved `.npy` file and plots the phase-space triangulation. Note that we need to sort the triangles on their density, so that the most dense triangles are plotted last.
+
+``` {.python #phase-space-plot}
+def plot_for_time(box, triangles, time, bbox=[(5,45), (5,45)], fig=None, ax=None):
+    fn = 'data/x.{0:05d}.npy'.format(int(round(time*1000)))
+    with open(fn, "rb") as f:
+        x = np.load(f)
+        p = np.load(f)
+
+    area = abs(triangle_area(x[:,0], x[:,1], triangles)) / box.res**2
+    sorting = np.argsort(area)[::-1]
+
+    if ax is None:
+        fig, ax = plt.subplots(1, 1, figsize=(8,8))
+
+    ax.tripcolor(x[:,0], x[:,1], triangles[sorting], np.log(1./area[sorting]),
+                  alpha=0.3, vmin=-2, vmax=2, cmap='YlGnBu')
+    ax.set_xlim(*bbox[0])
+    ax.set_ylim(*bbox[1])
+    return fig, ax
+```
+
+## Main script
+
+``` {.python file=nbody/phase_plot.py}
+from matplotlib import pyplot as plt
+from matplotlib import rcParams
+
+import numpy as np
+from nbody.cft import Box
+
+rcParams["font.family"] = "serif"
+
+<<create-triangulation>>
+<<triangle-area>>
+<<phase-space-plot>>
+
+if __name__ == "__main__":
+    box = Box(2, 256, 50.0)
+    triangles = box_triangles(box)
+
+    fig, axs = plt.subplots(2, 3, figsize=(12, 8))
+
+    for i, t in enumerate([0.5, 1.0, 2.0]):
+        plot_for_time(box, triangles, t, fig=fig, ax=axs[0,i])
+        axs[0,i].set_title(f"a = {t}")
+
+    for i, t in enumerate([0.5, 1.0, 2.0]):
+        plot_for_time(box, triangles, t, bbox=[(15,30), (5, 20)], fig=fig, ax=axs[1,i])
+
+    fig.tight_layout()
+    fig.savefig('docs/figures/x.collage.png', dpi=150)
+```

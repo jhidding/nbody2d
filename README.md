@@ -1,6 +1,8 @@
 # 2D PM n-body code for cosmology
 [![Entangled badge](https://img.shields.io/badge/entangled-Use%20the%20source!-%2300aeff)](https://entangled.github.io/)
 
+![A sample simulation, three time steps; the bottom row is a zoom-in.](figures/x.collage.png)
+
 ## Install
 This code has the following dependencies:
 
