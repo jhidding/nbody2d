@@ -18,3 +18,5 @@ Progress on simulation is plotted with Gnuplot. Results end up in `./data` direc
 I'm in the process of making this code literate. To edit the code, have [Entangled](https://entangled.github.io/) installed and running:
 
         entangled daemon
+
+Documentation is currently minimal. The literate code can be viewed in rendered form [on the github.io pages](https://jhidding.github.io/nbody2d).
