@@ -161,17 +161,16 @@ def leap_frog(dt: float, h: HamiltonianSystem[Vector], s: State[Vector]) -> Stat
 # ~\~ end
 # ~\~ begin <<lit/index.md|integrator>>[5]
 def iterate_step(step: Stepper, halt: HaltingCondition, init: State[Vector]) -> State[Vector]:
-    while not halt(init):
-        init = step(init)
-    return init
+    state = init
+    while not halt(state):
+        state = step(state)
+        fn = 'data/x.{0:05d}.npy'.format(int(round(state.time*1000)))
+        with open(fn, 'wb') as f:
+            np.save(f, state.position)
+            np.save(f, state.momentum)
+    return state
 # ~\~ end
 # ~\~ begin <<lit/index.md|solver>>[0]
-def a2r(B, X):
-    return X.transpose([1,2,0]).reshape([B.N**2, 2])
-
-def r2a(B, x):
-    return x.reshape([B.N, B.N, 2]).transpose([2,0,1])
-
 class PoissonVlasov(HamiltonianSystem[np.ndarray]):
     def __init__(self, box, cosmology, particle_mass):
         self.box = box
@@ -181,13 +180,14 @@ class PoissonVlasov(HamiltonianSystem[np.ndarray]):
         self._g("set cbrange [0.2:50]", "set log cb", "set size square",
                 "set xrange [0:{0}] ; set yrange [0:{0}]".format(box.N))
         self._g("set term x11")
-        # self._g(gp.default_palette)
 
+    # ~\~ begin <<lit/index.md|position-equation>>[0]
     def positionEquation(self, s: State[np.ndarray]) -> np.ndarray:
         a = s.time
         da = self.cosmology.da(a)
         return s.momentum / (s.time**2 * da)
-
+    # ~\~ end
+    # ~\~ begin <<lit/index.md|momentum-equation>>[0]
     def momentumEquation(self, s: State[np.ndarray]) -> np.ndarray:
         a = s.time
         da = self.cosmology.da(a)
@@ -201,8 +201,15 @@ class PoissonVlasov(HamiltonianSystem[np.ndarray]):
         acc_y = Interp2D(gradient_2nd_order(phi, 1))
         acc = np.c_[acc_x(x_grid), acc_y(x_grid)] / self.box.res
         return -acc / da
+    # ~\~ end
 # ~\~ end
 # ~\~ begin <<lit/index.md|initialization>>[0]
+def a2r(B, X):
+    return X.transpose([1,2,0]).reshape([B.N**2, 2])
+
+def r2a(B, x):
+    return x.reshape([B.N, B.N, 2]).transpose([2,0,1])
+
 class Zeldovich:
     def __init__(self, B_mass: Box, B_force: Box, cosmology: Cosmology, phi: np.ndarray):
         self.bm = B_mass
@@ -230,9 +237,7 @@ if __name__ == "__main__":
     A = 10
     seed = 4
     Power_spectrum = cft.Power_law(-0.5) * cft.Scale(B_m, 0.2) * cft.Cutoff(B_m)
-
     phi = cft.garfield(B_m, Power_spectrum, cft.Potential(), seed) * A
-    rho = cft.garfield(B_m, Power_spectrum, cft.Scale(B_m, 0.5), seed) * A
 
     force_box = cft.Box(2, N*2, B_m.L)
     za = Zeldovich(B_m, force_box, EdS, phi)

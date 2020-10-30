@@ -1,0 +1,214 @@
+@import url('https://fonts.googleapis.com/css?family=Zilla+Slab:300,400,500&display=swap');
+
+body {
+        font-family: 'Zilla Slab', serif;
+        font-size: 16pt;
+        font-weight: 300;
+        min-height: 100vh;
+}
+
+main {
+        background: #eee;
+}
+
+h1 {
+        margin: 1em 0 0.5em -1em;
+        padding-left: 0.5em;
+        border-bottom: thin solid black;
+}
+
+h2 {
+        margin-top: 15pt;
+        border-bottom: thin solid black;
+}
+
+strong {
+        font-weight: 500;
+}
+
+nav ul {
+        color: white;
+}
+
+nav li a {
+        color: white;
+}
+
+nav li a:hover {
+        color: white;
+}
+
+.annotated-code p {
+        margin-bottom: 2pt;
+        font-family: "Cantarell", sans-serif;
+        font-size: smaller;
+}
+
+div.sourceCode {
+        padding: 0;
+        margin: 0.2em 2em 1em 2em;
+        border-radius: 5pt;
+        box-shadow: 1px 1px 3px 0px #ccc;
+}
+
+pre.sourceCode {
+        /* background: #eee; */
+        color: inherit;
+        margin: 0;
+        border-left: thick solid #888;
+        padding: 10pt 10pt 10pt 20pt;
+        font-size: 1rem;
+}
+
+div.doctestResult {
+        padding: 0;
+        margin: 0em 2em 1em 2em;
+        border-radius: 0 0 5pt 5pt;
+        box-shadow: 1px 1px 3px 0px #ccc;
+}
+
+.programOutput {
+        font-family: monospace;
+        background: #fafafa;
+        color: inherit;
+        margin: 0;
+        border-radius: 0 0 5pt 5pt;
+        border-left: thick solid #586;
+        padding: 10pt 10pt 10pt 20pt;
+        font-size: 1rem;
+}
+
+pre.ansi2html-content {
+        margin-bottom: 0;
+}
+
+.programOutput .ansi32 {
+        color: green;
+}
+
+.programOutput .ansi31 {
+        color: red;
+}
+
+.programOutput .ansi1 {
+        font-weight: bold;
+}
+
+.doctestResult pre.sourceCode {
+        border-color: #484;
+}
+
+.doctestInput pre.sourceCode {
+        border-color: #568;
+}
+
+.doctestInput div.sourceCode {
+        border-radius: 5pt 5pt 0 0;
+        margin-bottom: 0;
+}
+
+.doctestResult div.sourceCode {
+        border-radius: 0 0 5pt 5pt;
+        margin-top: 0;
+        border-top: thin solid #ccc;
+}
+
+.doctest[data-status='FAIL'] .doctestResult div.sourceCode {
+        border-radius: 0 0 0 0;
+        margin-bottom: 0;
+}
+
+.doctest[data-status='FAIL'] .doctestResult pre.sourceCode {
+        border-color: #933;
+}
+
+.doctest .doctestExpect div.sourceCode {
+        border-radius: 0 0 5pt 5pt;
+        margin-top: 0;
+        border-top: thin solid #ccc;
+}
+
+.doctest .doctestExpect pre.sourceCode:before {
+        content: "Expected: ";
+}
+
+.doctestExpect pre.sourceCode {
+        border-color: #888;
+}
+
+footer {
+        background: #eee;
+        padding: 0.5em 0 0.5em 0;
+}
+
+blockquote {
+        border-left: thick solid #888;
+        padding: 10pt 10pt 10pt 20pt;
+        margin-left: 2em;
+}
+
+table {
+        margin-left: 2em;
+        margin-right: 2em;
+        border-left: thick solid #888;
+        background: white;
+        border-radius: 5pt;
+        box-shadow: 1px 1px 3px 0px #ccc;
+}
+
+td, th {
+        padding: 2pt 5pt 2pt 5pt;
+}
+
+th {
+        border-bottom: solid thin black;
+}
+
+tr:nth-child(even) {
+        background-color: #eee;
+}
+
+code {
+        color: #bd2130;
+        font-family: "Source Code Pro", monospace;
+        font-weight: 400;
+        font-size: smaller;
+}
+
+.fold-block {
+        margin-right: 20pt;
+        margin-bottom: 20pt;
+}
+
+.fold-block div.sourceCode {
+        margin-left: 30pt;
+        margin-right: 10pt;
+}
+
+.fold-toggle {
+        text-align: left;
+        font-family: "Cantarell", sans-serif;
+        /*font-size: 13pt;*/
+        font-weight: 400;
+        font-style: italic;
+        margin-bottom: 3pt;
+}
+
+figure {
+        margin: 0.2em 2em 1em 2em;
+        border-left: thick solid #568;
+        max-width: 100%;
+        box-shadow: 1px 1px 3px 0px #ccc;
+        border-radius: 5pt;
+        padding-bottom: 5pt;
+}
+
+figure img {
+        max-width: 100%;
+        border-radius: 0 5pt 0 0;
+}
+
+figcaption {
+        font-style: italic;
+        margin: 5pt 5pt 5pt 5pt;
+}

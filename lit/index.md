@@ -48,7 +48,7 @@ class Cosmology:
     <<cosmology-methods>>
 ```
 
-From these parameters, we can compute the curvature, 
+From these parameters, we can compute the curvature,
 
 $$\Omega_k = 1 - \Omega_{m} - \Omega_{\Lambda},$${#eq:curvature}
 
@@ -80,7 +80,7 @@ def da(self, a):
             + self.OmegaK * a**-2)
 ```
 
-For all cases that we're interested in, we can integrate this equation directly to obtain the growing mode solution. We cannot start the integration from $a=0$, but in the limit of $a \to 0$, we have that $\D_{+} \approx a$.
+For all cases that we're interested in, we can integrate this equation directly to obtain the growing mode solution. We cannot start the integration from $a=0$, but in the limit of $a \to 0$, we have that $D_{+} \approx a$.
 
 ``` {.python #cosmology-methods}
 def growing_mode(self, a):
@@ -93,7 +93,7 @@ def growing_mode(self, a):
             * quad(lambda b: self.adot(b)**(-3), 0.00001, a)[0] + 0.00001
 ```
 
-Using this, we can define two standard cosmologies, $\Lambda$CDM and Einstein-de Sitter.
+Using this, we can define two standard cosmologies, ΛCDM and Einstein-de Sitter.
 
 ``` {.python #cosmology}
 LCDM = Cosmology(68.0, 0.31, 0.69)
@@ -101,7 +101,7 @@ EdS = Cosmology(70.0, 1.0, 0.0)
 ```
 
 # Mass deposition
-To do the mass deposition, that is, convert the position of particles into a 2D mesh of densities, we use the cloud-in-cell method. Every particle is smeared out over its four nearest neighbours, weighted by the distance to each neighbour. This principle is similar (but inverse) to a linear interpolation scheme: we compute the integer index of the grid-cell the particle belongs to, and use the floating-point remainder to compute the fractions in all the four neighbours. In this case however, we abuse the `histogram2d` function in `numpy` to do the interpolation for us. 
+To do the mass deposition, that is, convert the position of particles into a 2D mesh of densities, we use the cloud-in-cell method. Every particle is smeared out over its four nearest neighbours, weighted by the distance to each neighbour. This principle is similar (but inverse) to a linear interpolation scheme: we compute the integer index of the grid-cell the particle belongs to, and use the floating-point remainder to compute the fractions in all the four neighbours. In this case however, we abuse the `histogram2d` function in `numpy` to do the interpolation for us.
 
 ``` {.python #mass-deposition}
 def md_cic(B: Box, X: np.ndarray) -> np.ndarray:
@@ -237,25 +237,24 @@ def leap_frog(dt: float, h: HamiltonianSystem[Vector], s: State[Vector]) -> Stat
     return s.kick(dt, h).wait(dt/2).drift(dt, h).wait(dt/2)
 ```
 
-From the integrator we can construct a `Stepper` function (`step = partial(leap_frog, dt, system)`), that we can iterate until completion.
+From the integrator we can construct a `Stepper` function (`step = partial(leap_frog, dt, system)`), that we can iterate until completion. After each step, the current state is saved to a file.
 
 ``` {.python #integrator}
 def iterate_step(step: Stepper, halt: HaltingCondition, init: State[Vector]) -> State[Vector]:
-    while not halt(init):
-        init = step(init)
-    return init
+    state = init
+    while not halt(state):
+        state = step(state)
+        fn = 'data/x.{0:05d}.npy'.format(int(round(state.time*1000)))
+        with open(fn, 'wb') as f:
+            np.save(f, state.position)
+            np.save(f, state.momentum)
+    return state
 ```
 
 # Poisson solver
 Now for the hardest bit. We need to solve the Poisson equation.
 
 ``` {.python #solver}
-def a2r(B, X):
-    return X.transpose([1,2,0]).reshape([B.N**2, 2])
-
-def r2a(B, x):
-    return x.reshape([B.N, B.N, 2]).transpose([2,0,1])
-
 class PoissonVlasov(HamiltonianSystem[np.ndarray]):
     def __init__(self, box, cosmology, particle_mass):
         self.box = box
@@ -265,32 +264,59 @@ class PoissonVlasov(HamiltonianSystem[np.ndarray]):
         self._g("set cbrange [0.2:50]", "set log cb", "set size square",
                 "set xrange [0:{0}] ; set yrange [0:{0}]".format(box.N))
         self._g("set term x11")
-        # self._g(gp.default_palette)
 
-    def positionEquation(self, s: State[np.ndarray]) -> np.ndarray:
-        a = s.time
-        da = self.cosmology.da(a)
-        return s.momentum / (s.time**2 * da)
+    <<position-equation>>
+    <<momentum-equation>>
+```
 
-    def momentumEquation(self, s: State[np.ndarray]) -> np.ndarray:
-        a = s.time
-        da = self.cosmology.da(a)
-        x_grid = s.position / self.box.res
-        delta = md_cic(self.box, x_grid) * self.particle_mass - 1.0
-        self._g(gp.plot_data(gp.array(delta.T+1, "t'' w image")))
-        delta_f = np.fft.fftn(delta)
-        kernel = cft.Potential()(self.box.K)
-        phi = np.fft.ifftn(delta_f * kernel).real * self.cosmology.G / a
-        acc_x = Interp2D(gradient_2nd_order(phi, 0))
-        acc_y = Interp2D(gradient_2nd_order(phi, 1))
-        acc = np.c_[acc_x(x_grid), acc_y(x_grid)] / self.box.res
-        return -acc / da
+The position equation:
+
+$$\partial_a x = \frac{p}{a^2 \dot{a}}$$
+
+``` {.python #position-equation}
+def positionEquation(self, s: State[np.ndarray]) -> np.ndarray:
+    a = s.time
+    da = self.cosmology.da(a)
+    return s.momentum / (s.time**2 * da)
+```
+
+The momentum equation:
+
+$$\partial_a p = -\frac{1}{\dot{a}} \nabla \Phi,$$
+
+where
+
+$$\nabla^2 \Phi = \frac{G}{a} \delta.$$
+
+We first compute $\delta$ using the cloud-in-cell mass deposition `md_cic()` function.
+Then we integrate twice by method of Fourier transform. To compute the accelleration we take the second-order approximation of the gradient function.
+
+``` {.python #momentum-equation}
+def momentumEquation(self, s: State[np.ndarray]) -> np.ndarray:
+    a = s.time
+    da = self.cosmology.da(a)
+    x_grid = s.position / self.box.res
+    delta = md_cic(self.box, x_grid) * self.particle_mass - 1.0
+    self._g(gp.plot_data(gp.array(delta.T+1, "t'' w image")))
+    delta_f = np.fft.fftn(delta)
+    kernel = cft.Potential()(self.box.K)
+    phi = np.fft.ifftn(delta_f * kernel).real * self.cosmology.G / a
+    acc_x = Interp2D(gradient_2nd_order(phi, 0))
+    acc_y = Interp2D(gradient_2nd_order(phi, 1))
+    acc = np.c_[acc_x(x_grid), acc_y(x_grid)] / self.box.res
+    return -acc / da
 ```
 
 # The Zeldovich Approximation
 To bootstrap the simulation, we need to create a set of particles and assign velocities. This is done using the Zeldovich Approximation.
 
 ``` {.python #initialization}
+def a2r(B, X):
+    return X.transpose([1,2,0]).reshape([B.N**2, 2])
+
+def r2a(B, x):
+    return x.reshape([B.N, B.N, 2]).transpose([2,0,1])
+
 class Zeldovich:
     def __init__(self, B_mass: Box, B_force: Box, cosmology: Cosmology, phi: np.ndarray):
         self.bm = B_mass
@@ -309,6 +335,8 @@ class Zeldovich:
         return (self.bf.N / self.bm.N)**self.bm.dim
 ```
 
+The main function
+
 ``` {.python #main}
 if __name__ == "__main__":
     from . import cft
@@ -319,9 +347,7 @@ if __name__ == "__main__":
     A = 10
     seed = 4
     Power_spectrum = cft.Power_law(-0.5) * cft.Scale(B_m, 0.2) * cft.Cutoff(B_m)
-
     phi = cft.garfield(B_m, Power_spectrum, cft.Potential(), seed) * A
-    rho = cft.garfield(B_m, Power_spectrum, cft.Scale(B_m, 0.5), seed) * A
 
     force_box = cft.Box(2, N*2, B_m.L)
     za = Zeldovich(B_m, force_box, EdS, phi)
@@ -330,3 +356,6 @@ if __name__ == "__main__":
     stepper = partial(leap_frog, 0.02, system)
     iterate_step(stepper, lambda s: s.time > 4.0, state)
 ```
+
+# Constrained fields
+The `nbody.cft` library computes Gaussian random fields, and you can specify constraints on these fields.

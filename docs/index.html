@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <meta name="author" content="Johan Hidding" />
+  <title>2D particle-mesh n-body code</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <style type="text/css">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {  background-color: #f8f8f8; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ef2929; } /* Alert */
+code span.an { color: #8f5902; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #c4a000; } /* Attribute */
+code span.bn { color: #0000cf; } /* BaseN */
+code span.cf { color: #204a87; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4e9a06; } /* Char */
+code span.cn { color: #000000; } /* Constant */
+code span.co { color: #8f5902; font-style: italic; } /* Comment */
+code span.cv { color: #8f5902; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #8f5902; font-weight: bold; font-style: italic; } /* Documentation */
+code span.dt { color: #204a87; } /* DataType */
+code span.dv { color: #0000cf; } /* DecVal */
+code span.er { color: #a40000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #0000cf; } /* Float */
+code span.fu { color: #000000; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #8f5902; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #204a87; font-weight: bold; } /* Keyword */
+code span.op { color: #ce5c00; font-weight: bold; } /* Operator */
+code span.ot { color: #8f5902; } /* Other */
+code span.pp { color: #8f5902; font-style: italic; } /* Preprocessor */
+code span.sc { color: #000000; } /* SpecialChar */
+code span.ss { color: #4e9a06; } /* SpecialString */
+code span.st { color: #4e9a06; } /* String */
+code span.va { color: #000000; } /* Variable */
+code span.vs { color: #4e9a06; } /* VerbatimString */
+code span.wa { color: #8f5902; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <!-- Bootstrap 4.5.0 stylesheet -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+  <link rel="stylesheet" href="css/mods.css" />
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+<!-- <script data-main="scripts/main" src="js/require.js"></script> -->
+  <!-- Load React. -->
+  <!-- Note: when deploying, replace "development.js" with "production.min.js". -->
+<!--  <script src="https://unpkg.com/react@16/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js" crossorigin></script> -->
+
+
+</head>
+<body class="d-flex flex-column">
+
+<nav id="TOC" class="navbar navbar-dark bg-dark">
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <a href="#" class="ml-5 mr-auto navbar-brand">2D particle-mesh n-body code<br><span style="font-size: smaller"> 
+        by <i>Johan Hidding</i></span></a>
+<div class="collapse navbar-collapse" id="navbarSupportedContent">
+<ul>
+<li><a href="#the-box">The Box</a></li>
+<li><a href="#cosmology">Cosmology</a></li>
+<li><a href="#mass-deposition">Mass deposition</a></li>
+<li><a href="#interpolation">Interpolation</a></li>
+<li><a href="#leap-frog-integrator">Leap-frog integrator</a></li>
+<li><a href="#poisson-solver">Poisson solver</a></li>
+<li><a href="#the-zeldovich-approximation">The Zeldovich Approximation</a></li>
+<li><a href="#constrained-fields">Constrained fields</a></li>
+</ul>
+</div>
+</nav>
+
+<!-- <nav class="navbar navbar-dark navbar-expand-md bg-dark mb-4">
+<p class="author">Johan Hidding</p>
+</nav>
+ -->
+
+<main role="main" class="flex-fill"><div class="container my-5">
+<p>This is a particle-mesh n-body code for cosmological n-body simulations. This code has several uses. For many methods of analysis in cosmology it can be very helpful to have a 2D sample available to test them with. This code is very nice to play around with for students, since it is written in 100% Python. Lastly, having 2D simulations can give a great deal of insight.</p>
+<div class="annotated-code">
+<p><span><em>«nbody/nbody.py»=</em></span></p>
+<div class="sourceCode" id="cb1" data-file="nbody/nbody.py"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="op">&lt;&lt;</span>imports<span class="op">&gt;&gt;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a><span class="op">&lt;&lt;</span>cosmology<span class="op">&gt;&gt;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a><span class="op">&lt;&lt;</span>mass<span class="op">-</span>deposition<span class="op">&gt;&gt;</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a><span class="op">&lt;&lt;</span>interpolation<span class="op">&gt;&gt;</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true"></a><span class="op">&lt;&lt;</span>integrator<span class="op">&gt;&gt;</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true"></a><span class="op">&lt;&lt;</span>solver<span class="op">&gt;&gt;</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true"></a><span class="op">&lt;&lt;</span>initialization<span class="op">&gt;&gt;</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true"></a><span class="op">&lt;&lt;</span>main<span class="op">&gt;&gt;</span></span></code></pre></div>
+</div>
+<p>Some things we will definitely need:</p>
+<div class="annotated-code">
+<p><span><em>«imports»=</em></span></p>
+<div class="sourceCode" id="imports"><pre class="sourceCode python"><code class="sourceCode python"><span id="imports-1"><a href="#imports-1" aria-hidden="true"></a><span class="im">from</span> __future__ <span class="im">import</span> annotations</span>
+<span id="imports-2"><a href="#imports-2" aria-hidden="true"></a><span class="im">from</span> dataclasses <span class="im">import</span> dataclass</span>
+<span id="imports-3"><a href="#imports-3" aria-hidden="true"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="imports-4"><a href="#imports-4" aria-hidden="true"></a><span class="im">from</span> scipy.integrate <span class="im">import</span> quad</span>
+<span id="imports-5"><a href="#imports-5" aria-hidden="true"></a><span class="im">from</span> .cft <span class="im">import</span> Box</span>
+<span id="imports-6"><a href="#imports-6" aria-hidden="true"></a><span class="im">from</span> . <span class="im">import</span> gnuplot <span class="im">as</span> gp</span>
+<span id="imports-7"><a href="#imports-7" aria-hidden="true"></a></span>
+<span id="imports-8"><a href="#imports-8" aria-hidden="true"></a><span class="im">from</span> abc <span class="im">import</span> ABC, abstractmethod</span>
+<span id="imports-9"><a href="#imports-9" aria-hidden="true"></a><span class="im">from</span> typing <span class="im">import</span> Generic, TypeVar, Callable</span>
+<span id="imports-10"><a href="#imports-10" aria-hidden="true"></a><span class="im">from</span> functools <span class="im">import</span> partial</span></code></pre></div>
+</div>
+<h1 id="the-box">The Box</h1>
+<p>The <code>Box</code> class contains all information about the simulation box: mainly the size in pixels and the physical size it represents. All operations will assume periodic boundary conditions. In <code>numpy</code> this is achieved by using <code>np.roll</code> to shift a grid along a given axis.</p>
+<h1 id="cosmology">Cosmology</h1>
+<p>The background cosmology is described by a function giving the scale function <span class="math inline">\(a(t)\)</span> as a function of time. In standard Big Bang cosmology this scale function is computed from three parameters (ignoring baryons): <span class="math inline">\(H_0\)</span> the Hubble expansion rate at <span class="math inline">\(t_0\)</span> (<span class="math inline">\(t_0\)</span> being now), <span class="math inline">\(\Omega_{m}\)</span> the matter density expressed as a fraction of the critical density, and <span class="math inline">\(\Omega_{\Lambda}\)</span> the dark energy (cosmological constant) component, again expressed as a fraction of the critical density.</p>
+<div class="annotated-code">
+<p><span><em>«cosmology»=</em></span></p>
+<div class="sourceCode" id="cosmology"><pre class="sourceCode python"><code class="sourceCode python"><span id="cosmology-1"><a href="#cosmology-1" aria-hidden="true"></a><span class="at">@dataclass</span></span>
+<span id="cosmology-2"><a href="#cosmology-2" aria-hidden="true"></a><span class="kw">class</span> Cosmology:</span>
+<span id="cosmology-3"><a href="#cosmology-3" aria-hidden="true"></a>    H0 : <span class="bu">float</span></span>
+<span id="cosmology-4"><a href="#cosmology-4" aria-hidden="true"></a>    OmegaM : <span class="bu">float</span></span>
+<span id="cosmology-5"><a href="#cosmology-5" aria-hidden="true"></a>    OmegaL : <span class="bu">float</span></span>
+<span id="cosmology-6"><a href="#cosmology-6" aria-hidden="true"></a></span>
+<span id="cosmology-7"><a href="#cosmology-7" aria-hidden="true"></a>    <span class="op">&lt;&lt;</span>cosmology<span class="op">-</span>methods<span class="op">&gt;&gt;</span></span></code></pre></div>
+</div>
+<p>From these parameters, we can compute the curvature,</p>
+<p><span class="math display">\[\Omega_k = 1 - \Omega_{m} - \Omega_{\Lambda},\]</span>{#eq:curvature}</p>
+<div class="annotated-code">
+<p><span><em>«cosmology-methods»=</em></span></p>
+<div class="sourceCode" id="cosmology-methods"><pre class="sourceCode python"><code class="sourceCode python"><span id="cosmology-methods-1"><a href="#cosmology-methods-1" aria-hidden="true"></a><span class="at">@property</span></span>
+<span id="cosmology-methods-2"><a href="#cosmology-methods-2" aria-hidden="true"></a><span class="kw">def</span> OmegaK(<span class="va">self</span>):</span>
+<span id="cosmology-methods-3"><a href="#cosmology-methods-3" aria-hidden="true"></a>    <span class="cf">return</span> <span class="dv">1</span> <span class="op">-</span> <span class="va">self</span>.OmegaM <span class="op">-</span> <span class="va">self</span>.OmegaL</span></code></pre></div>
+</div>
+<p>and the gravitational constant,</p>
+<p><span class="math display">\[G = \frac{3}{2} \Omega_{m} H_0^2.\]</span>{#eq:grav-const}</p>
+<div class="annotated-code">
+<p><span><em>«cosmology-methods»+</em></span></p>
+<div class="sourceCode" id="cosmology-methods"><pre class="sourceCode python"><code class="sourceCode python"><span id="cosmology-methods-1"><a href="#cosmology-methods-1" aria-hidden="true"></a><span class="at">@property</span></span>
+<span id="cosmology-methods-2"><a href="#cosmology-methods-2" aria-hidden="true"></a><span class="kw">def</span> G(<span class="va">self</span>):</span>
+<span id="cosmology-methods-3"><a href="#cosmology-methods-3" aria-hidden="true"></a>    <span class="cf">return</span> <span class="fl">3.</span><span class="op">/</span><span class="dv">2</span> <span class="op">*</span> <span class="va">self</span>.OmegaM <span class="op">*</span> <span class="va">self</span>.H0<span class="op">**</span><span class="dv">2</span></span></code></pre></div>
+</div>
+<p>We can now express the expansion factor as an initial value problem,</p>
+<p><span class="math display">\[\partial_t a(a) = H_0 a \sqrt{\Omega_{\Lambda} + \Omega_{m} a^{-3} + \Omega_{k} a^{-2}}.\]</span></p>
+<div class="annotated-code">
+<p><span><em>«cosmology-methods»+</em></span></p>
+<div class="sourceCode" id="cosmology-methods"><pre class="sourceCode python"><code class="sourceCode python"><span id="cosmology-methods-1"><a href="#cosmology-methods-1" aria-hidden="true"></a><span class="kw">def</span> da(<span class="va">self</span>, a):</span>
+<span id="cosmology-methods-2"><a href="#cosmology-methods-2" aria-hidden="true"></a>    <span class="cf">return</span> <span class="va">self</span>.H0 <span class="op">*</span> a <span class="op">*</span> np.sqrt(</span>
+<span id="cosmology-methods-3"><a href="#cosmology-methods-3" aria-hidden="true"></a>              <span class="va">self</span>.OmegaL <span class="op">\</span></span>
+<span id="cosmology-methods-4"><a href="#cosmology-methods-4" aria-hidden="true"></a>            <span class="op">+</span> <span class="va">self</span>.OmegaM <span class="op">*</span> a<span class="op">**-</span><span class="dv">3</span> <span class="op">\</span></span>
+<span id="cosmology-methods-5"><a href="#cosmology-methods-5" aria-hidden="true"></a>            <span class="op">+</span> <span class="va">self</span>.OmegaK <span class="op">*</span> a<span class="op">**-</span><span class="dv">2</span>)</span></code></pre></div>
+</div>
+<p>For all cases that we’re interested in, we can integrate this equation directly to obtain the growing mode solution. We cannot start the integration from <span class="math inline">\(a=0\)</span>, but in the limit of <span class="math inline">\(a \to 0\)</span>, we have that <span class="math inline">\(D_{+} \approx a\)</span>.</p>
+<div class="annotated-code">
+<p><span><em>«cosmology-methods»+</em></span></p>
+<div class="sourceCode" id="cosmology-methods"><pre class="sourceCode python"><code class="sourceCode python"><span id="cosmology-methods-1"><a href="#cosmology-methods-1" aria-hidden="true"></a><span class="kw">def</span> growing_mode(<span class="va">self</span>, a):</span>
+<span id="cosmology-methods-2"><a href="#cosmology-methods-2" aria-hidden="true"></a>    <span class="cf">if</span> <span class="bu">isinstance</span>(a, np.ndarray):</span>
+<span id="cosmology-methods-3"><a href="#cosmology-methods-3" aria-hidden="true"></a>        <span class="cf">return</span> np.array([<span class="va">self</span>.growing_mode(b) <span class="cf">for</span> b <span class="kw">in</span> a])</span>
+<span id="cosmology-methods-4"><a href="#cosmology-methods-4" aria-hidden="true"></a>    <span class="cf">elif</span> a <span class="op">&lt;=</span> <span class="fl">0.001</span>:</span>
+<span id="cosmology-methods-5"><a href="#cosmology-methods-5" aria-hidden="true"></a>        <span class="cf">return</span> a</span>
+<span id="cosmology-methods-6"><a href="#cosmology-methods-6" aria-hidden="true"></a>    <span class="cf">else</span>:</span>
+<span id="cosmology-methods-7"><a href="#cosmology-methods-7" aria-hidden="true"></a>        <span class="cf">return</span> <span class="va">self</span>.factor <span class="op">*</span> <span class="va">self</span>.adot(a)<span class="op">/</span>a <span class="op">\</span></span>
+<span id="cosmology-methods-8"><a href="#cosmology-methods-8" aria-hidden="true"></a>            <span class="op">*</span> quad(<span class="kw">lambda</span> b: <span class="va">self</span>.adot(b)<span class="op">**</span>(<span class="op">-</span><span class="dv">3</span>), <span class="fl">0.00001</span>, a)[<span class="dv">0</span>] <span class="op">+</span> <span class="fl">0.00001</span></span></code></pre></div>
+</div>
+<p>Using this, we can define two standard cosmologies, ΛCDM and Einstein-de Sitter.</p>
+<div class="annotated-code">
+<p><span><em>«cosmology»+</em></span></p>
+<div class="sourceCode" id="cosmology"><pre class="sourceCode python"><code class="sourceCode python"><span id="cosmology-1"><a href="#cosmology-1" aria-hidden="true"></a>LCDM <span class="op">=</span> Cosmology(<span class="fl">68.0</span>, <span class="fl">0.31</span>, <span class="fl">0.69</span>)</span>
+<span id="cosmology-2"><a href="#cosmology-2" aria-hidden="true"></a>EdS <span class="op">=</span> Cosmology(<span class="fl">70.0</span>, <span class="fl">1.0</span>, <span class="fl">0.0</span>)</span></code></pre></div>
+</div>
+<h1 id="mass-deposition">Mass deposition</h1>
+<p>To do the mass deposition, that is, convert the position of particles into a 2D mesh of densities, we use the cloud-in-cell method. Every particle is smeared out over its four nearest neighbours, weighted by the distance to each neighbour. This principle is similar (but inverse) to a linear interpolation scheme: we compute the integer index of the grid-cell the particle belongs to, and use the floating-point remainder to compute the fractions in all the four neighbours. In this case however, we abuse the <code>histogram2d</code> function in <code>numpy</code> to do the interpolation for us.</p>
+<div class="annotated-code">
+<p><span><em>«mass-deposition»=</em></span></p>
+<div class="sourceCode" id="mass-deposition"><pre class="sourceCode python"><code class="sourceCode python"><span id="mass-deposition-1"><a href="#mass-deposition-1" aria-hidden="true"></a><span class="kw">def</span> md_cic(B: Box, X: np.ndarray) <span class="op">-&gt;</span> np.ndarray:</span>
+<span id="mass-deposition-2"><a href="#mass-deposition-2" aria-hidden="true"></a>    <span class="co">&quot;&quot;&quot;Takes a 2*M array of particle positions and returns an array of shape</span></span>
+<span id="mass-deposition-3"><a href="#mass-deposition-3" aria-hidden="true"></a><span class="co">    `B.shape`. The result is a density field computed by cloud-in-cell method.&quot;&quot;&quot;</span></span>
+<span id="mass-deposition-4"><a href="#mass-deposition-4" aria-hidden="true"></a>    f  <span class="op">=</span> X <span class="op">-</span> np.floor(X)</span>
+<span id="mass-deposition-5"><a href="#mass-deposition-5" aria-hidden="true"></a></span>
+<span id="mass-deposition-6"><a href="#mass-deposition-6" aria-hidden="true"></a>    rho <span class="op">=</span> np.zeros(B.shape, dtype<span class="op">=</span><span class="st">&#39;float64&#39;</span>)</span>
+<span id="mass-deposition-7"><a href="#mass-deposition-7" aria-hidden="true"></a>    rho_, x_, y_ <span class="op">=</span> np.histogram2d(X[:,<span class="dv">0</span>]<span class="op">%</span>B.N, X[:,<span class="dv">1</span>]<span class="op">%</span>B.N, bins<span class="op">=</span>B.shape,</span>
+<span id="mass-deposition-8"><a href="#mass-deposition-8" aria-hidden="true"></a>                        <span class="bu">range</span><span class="op">=</span>[[<span class="dv">0</span>, B.N], [<span class="dv">0</span>, B.N]],</span>
+<span id="mass-deposition-9"><a href="#mass-deposition-9" aria-hidden="true"></a>                        weights<span class="op">=</span>(<span class="dv">1</span> <span class="op">-</span> f[:,<span class="dv">0</span>])<span class="op">*</span>(<span class="dv">1</span> <span class="op">-</span> f[:,<span class="dv">1</span>]))</span>
+<span id="mass-deposition-10"><a href="#mass-deposition-10" aria-hidden="true"></a>    rho <span class="op">+=</span> rho_</span>
+<span id="mass-deposition-11"><a href="#mass-deposition-11" aria-hidden="true"></a>    rho_, x_, y_ <span class="op">=</span> np.histogram2d((X[:,<span class="dv">0</span>]<span class="op">+</span><span class="dv">1</span>)<span class="op">%</span>B.N, X[:,<span class="dv">1</span>]<span class="op">%</span>B.N, bins<span class="op">=</span>B.shape,</span>
+<span id="mass-deposition-12"><a href="#mass-deposition-12" aria-hidden="true"></a>                        <span class="bu">range</span><span class="op">=</span>[[<span class="dv">0</span>, B.N], [<span class="dv">0</span>, B.N]],</span>
+<span id="mass-deposition-13"><a href="#mass-deposition-13" aria-hidden="true"></a>                        weights<span class="op">=</span>(f[:,<span class="dv">0</span>])<span class="op">*</span>(<span class="dv">1</span> <span class="op">-</span> f[:,<span class="dv">1</span>]))</span>
+<span id="mass-deposition-14"><a href="#mass-deposition-14" aria-hidden="true"></a>    rho <span class="op">+=</span> rho_</span>
+<span id="mass-deposition-15"><a href="#mass-deposition-15" aria-hidden="true"></a>    rho_, x_, y_ <span class="op">=</span> np.histogram2d(X[:,<span class="dv">0</span>]<span class="op">%</span>B.N, (X[:,<span class="dv">1</span>]<span class="op">+</span><span class="dv">1</span>)<span class="op">%</span>B.N, bins<span class="op">=</span>B.shape,</span>
+<span id="mass-deposition-16"><a href="#mass-deposition-16" aria-hidden="true"></a>                        <span class="bu">range</span><span class="op">=</span>[[<span class="dv">0</span>, B.N], [<span class="dv">0</span>, B.N]],</span>
+<span id="mass-deposition-17"><a href="#mass-deposition-17" aria-hidden="true"></a>                        weights<span class="op">=</span>(<span class="dv">1</span> <span class="op">-</span> f[:,<span class="dv">0</span>])<span class="op">*</span>(f[:,<span class="dv">1</span>]))</span>
+<span id="mass-deposition-18"><a href="#mass-deposition-18" aria-hidden="true"></a>    rho <span class="op">+=</span> rho_</span>
+<span id="mass-deposition-19"><a href="#mass-deposition-19" aria-hidden="true"></a>    rho_, x_, y_ <span class="op">=</span> np.histogram2d((X[:,<span class="dv">0</span>]<span class="op">+</span><span class="dv">1</span>)<span class="op">%</span>B.N, (X[:,<span class="dv">1</span>]<span class="op">+</span><span class="dv">1</span>)<span class="op">%</span>B.N, bins<span class="op">=</span>B.shape,</span>
+<span id="mass-deposition-20"><a href="#mass-deposition-20" aria-hidden="true"></a>                        <span class="bu">range</span><span class="op">=</span>[[<span class="dv">0</span>, B.N], [<span class="dv">0</span>, B.N]],</span>
+<span id="mass-deposition-21"><a href="#mass-deposition-21" aria-hidden="true"></a>                        weights<span class="op">=</span>(f[:,<span class="dv">0</span>])<span class="op">*</span>(f[:,<span class="dv">1</span>]))</span>
+<span id="mass-deposition-22"><a href="#mass-deposition-22" aria-hidden="true"></a>    rho <span class="op">+=</span> rho_</span>
+<span id="mass-deposition-23"><a href="#mass-deposition-23" aria-hidden="true"></a></span>
+<span id="mass-deposition-24"><a href="#mass-deposition-24" aria-hidden="true"></a>    <span class="cf">return</span> rho</span></code></pre></div>
+</div>
+<h1 id="interpolation">Interpolation</h1>
+<p>To read a value from a grid, given a particle position, we need to interpolate. This routine performs linear interpolation on the grid.</p>
+<div class="annotated-code">
+<p><span><em>«interpolation»=</em></span></p>
+<div class="sourceCode" id="interpolation"><pre class="sourceCode python"><code class="sourceCode python"><span id="interpolation-1"><a href="#interpolation-1" aria-hidden="true"></a><span class="kw">class</span> Interp2D:</span>
+<span id="interpolation-2"><a href="#interpolation-2" aria-hidden="true"></a>    <span class="co">&quot;Reasonably fast bilinear interpolation routine&quot;</span></span>
+<span id="interpolation-3"><a href="#interpolation-3" aria-hidden="true"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, data):</span>
+<span id="interpolation-4"><a href="#interpolation-4" aria-hidden="true"></a>        <span class="va">self</span>.data <span class="op">=</span> data</span>
+<span id="interpolation-5"><a href="#interpolation-5" aria-hidden="true"></a>        <span class="va">self</span>.shape <span class="op">=</span> data.shape</span>
+<span id="interpolation-6"><a href="#interpolation-6" aria-hidden="true"></a></span>
+<span id="interpolation-7"><a href="#interpolation-7" aria-hidden="true"></a>    <span class="kw">def</span> <span class="fu">__call__</span>(<span class="va">self</span>, x):</span>
+<span id="interpolation-8"><a href="#interpolation-8" aria-hidden="true"></a>        X1 <span class="op">=</span> np.floor(x).astype(<span class="bu">int</span>) <span class="op">%</span> <span class="va">self</span>.shape</span>
+<span id="interpolation-9"><a href="#interpolation-9" aria-hidden="true"></a>        X2 <span class="op">=</span> np.ceil(x).astype(<span class="bu">int</span>) <span class="op">%</span> <span class="va">self</span>.shape</span>
+<span id="interpolation-10"><a href="#interpolation-10" aria-hidden="true"></a>        xm <span class="op">=</span> x <span class="op">%</span> <span class="fl">1.0</span></span>
+<span id="interpolation-11"><a href="#interpolation-11" aria-hidden="true"></a>        xn <span class="op">=</span> <span class="fl">1.0</span> <span class="op">-</span> xm</span>
+<span id="interpolation-12"><a href="#interpolation-12" aria-hidden="true"></a></span>
+<span id="interpolation-13"><a href="#interpolation-13" aria-hidden="true"></a>        f1 <span class="op">=</span> <span class="va">self</span>.data[X1[:,<span class="dv">0</span>], X1[:,<span class="dv">1</span>]]</span>
+<span id="interpolation-14"><a href="#interpolation-14" aria-hidden="true"></a>        f2 <span class="op">=</span> <span class="va">self</span>.data[X2[:,<span class="dv">0</span>], X1[:,<span class="dv">1</span>]]</span>
+<span id="interpolation-15"><a href="#interpolation-15" aria-hidden="true"></a>        f3 <span class="op">=</span> <span class="va">self</span>.data[X1[:,<span class="dv">0</span>], X2[:,<span class="dv">1</span>]]</span>
+<span id="interpolation-16"><a href="#interpolation-16" aria-hidden="true"></a>        f4 <span class="op">=</span> <span class="va">self</span>.data[X2[:,<span class="dv">0</span>], X2[:,<span class="dv">1</span>]]</span>
+<span id="interpolation-17"><a href="#interpolation-17" aria-hidden="true"></a></span>
+<span id="interpolation-18"><a href="#interpolation-18" aria-hidden="true"></a>        <span class="cf">return</span>  f1 <span class="op">*</span> xn[:,<span class="dv">0</span>] <span class="op">*</span> xn[:,<span class="dv">1</span>] <span class="op">+</span> <span class="op">\</span></span>
+<span id="interpolation-19"><a href="#interpolation-19" aria-hidden="true"></a>                f2 <span class="op">*</span> xm[:,<span class="dv">0</span>] <span class="op">*</span> xn[:,<span class="dv">1</span>] <span class="op">+</span> <span class="op">\</span></span>
+<span id="interpolation-20"><a href="#interpolation-20" aria-hidden="true"></a>                f3 <span class="op">*</span> xn[:,<span class="dv">0</span>] <span class="op">*</span> xm[:,<span class="dv">1</span>] <span class="op">+</span> <span class="op">\</span></span>
+<span id="interpolation-21"><a href="#interpolation-21" aria-hidden="true"></a>                f4 <span class="op">*</span> xm[:,<span class="dv">0</span>] <span class="op">*</span> xm[:,<span class="dv">1</span>]</span>
+<span id="interpolation-22"><a href="#interpolation-22" aria-hidden="true"></a></span>
+<span id="interpolation-23"><a href="#interpolation-23" aria-hidden="true"></a><span class="kw">def</span> gradient_2nd_order(F, i):</span>
+<span id="interpolation-24"><a href="#interpolation-24" aria-hidden="true"></a>    <span class="cf">return</span>   <span class="fl">1.</span><span class="op">/</span><span class="dv">12</span> <span class="op">*</span> np.roll(F,  <span class="dv">2</span>, axis<span class="op">=</span>i) <span class="op">-</span> <span class="fl">2.</span><span class="op">/</span><span class="dv">3</span>  <span class="op">*</span> np.roll(F,  <span class="dv">1</span>, axis<span class="op">=</span>i) <span class="op">\</span></span>
+<span id="interpolation-25"><a href="#interpolation-25" aria-hidden="true"></a>           <span class="op">+</span> <span class="fl">2.</span><span class="op">/</span><span class="dv">3</span>  <span class="op">*</span> np.roll(F, <span class="op">-</span><span class="dv">1</span>, axis<span class="op">=</span>i) <span class="op">-</span> <span class="fl">1.</span><span class="op">/</span><span class="dv">12</span> <span class="op">*</span> np.roll(F, <span class="op">-</span><span class="dv">2</span>, axis<span class="op">=</span>i)</span></code></pre></div>
+</div>
+<h1 id="leap-frog-integrator">Leap-frog integrator</h1>
+<p>The Leap-frog method is a generic method for solving Hamiltonian systems. We divide the integration into a <em>kick</em> and <em>drift</em> stage. In the Leap-frog method, the kicks happen in between the drifts.</p>
+<p>It is nice to write this part of the program in a formal way. We define an abstract <code>Vector</code> type, which will store the position and momentum variables.</p>
+<div class="annotated-code">
+<p><span><em>«integrator»=</em></span></p>
+<div class="sourceCode" id="integrator"><pre class="sourceCode python"><code class="sourceCode python"><span id="integrator-1"><a href="#integrator-1" aria-hidden="true"></a><span class="kw">class</span> VectorABC(ABC):</span>
+<span id="integrator-2"><a href="#integrator-2" aria-hidden="true"></a>    <span class="at">@abstractmethod</span></span>
+<span id="integrator-3"><a href="#integrator-3" aria-hidden="true"></a>    <span class="kw">def</span> <span class="fu">__add__</span>(<span class="va">self</span>, other: Vector) <span class="op">-&gt;</span> Vector:</span>
+<span id="integrator-4"><a href="#integrator-4" aria-hidden="true"></a>        <span class="cf">raise</span> <span class="pp">NotImplementedError</span></span>
+<span id="integrator-5"><a href="#integrator-5" aria-hidden="true"></a></span>
+<span id="integrator-6"><a href="#integrator-6" aria-hidden="true"></a>    <span class="at">@abstractmethod</span></span>
+<span id="integrator-7"><a href="#integrator-7" aria-hidden="true"></a>    <span class="kw">def</span> <span class="fu">__rmul__</span>(<span class="va">self</span>, other: <span class="bu">float</span>) <span class="op">-&gt;</span> Vector:</span>
+<span id="integrator-8"><a href="#integrator-8" aria-hidden="true"></a>        <span class="cf">raise</span> <span class="pp">NotImplementedError</span></span>
+<span id="integrator-9"><a href="#integrator-9" aria-hidden="true"></a></span>
+<span id="integrator-10"><a href="#integrator-10" aria-hidden="true"></a>VectorABC.register(np.ndarray)</span>
+<span id="integrator-11"><a href="#integrator-11" aria-hidden="true"></a></span>
+<span id="integrator-12"><a href="#integrator-12" aria-hidden="true"></a>Vector <span class="op">=</span> TypeVar(<span class="st">&quot;Vector&quot;</span>, bound<span class="op">=</span>VectorABC)</span></code></pre></div>
+</div>
+<p>Given a <code>Vector</code> type, we define the <code>State</code> to be the combination of <code>position</code>, <code>momentum</code> and <code>time</code> (due to FRW dynamics on the background, the system is time dependent).</p>
+<div class="annotated-code">
+<p><span><em>«integrator»+</em></span></p>
+<div class="sourceCode" id="integrator"><pre class="sourceCode python"><code class="sourceCode python"><span id="integrator-1"><a href="#integrator-1" aria-hidden="true"></a><span class="at">@dataclass</span></span>
+<span id="integrator-2"><a href="#integrator-2" aria-hidden="true"></a><span class="kw">class</span> State(Generic[Vector]):</span>
+<span id="integrator-3"><a href="#integrator-3" aria-hidden="true"></a>    time : <span class="bu">float</span></span>
+<span id="integrator-4"><a href="#integrator-4" aria-hidden="true"></a>    position : Vector</span>
+<span id="integrator-5"><a href="#integrator-5" aria-hidden="true"></a>    momentum : Vector</span>
+<span id="integrator-6"><a href="#integrator-6" aria-hidden="true"></a></span>
+<span id="integrator-7"><a href="#integrator-7" aria-hidden="true"></a>    <span class="op">&lt;&lt;</span>state<span class="op">-</span>methods<span class="op">&gt;&gt;</span></span></code></pre></div>
+</div>
+<p>We may manipulate the <code>State</code> in three ways: <code>kick</code>, <code>drift</code> or <code>wait</code>. <em>Kicking</em> the state means changing the momentum by some amound, given by the momentum equation. <em>Drifting</em> means changing the position following the position equation. <em>Waiting</em> simply sets the clock forward.</p>
+<div class="annotated-code">
+<p><span><em>«state-methods»=</em></span></p>
+<div class="sourceCode" id="state-methods"><pre class="sourceCode python"><code class="sourceCode python"><span id="state-methods-1"><a href="#state-methods-1" aria-hidden="true"></a><span class="kw">def</span> kick(<span class="va">self</span>, dt: <span class="bu">float</span>, h: HamiltonianSystem[Vector]) <span class="op">-&gt;</span> State[Vector]:</span>
+<span id="state-methods-2"><a href="#state-methods-2" aria-hidden="true"></a>    <span class="va">self</span>.momentum <span class="op">+=</span> dt <span class="op">*</span> h.momentumEquation(<span class="va">self</span>)</span>
+<span id="state-methods-3"><a href="#state-methods-3" aria-hidden="true"></a>    <span class="cf">return</span> <span class="va">self</span></span>
+<span id="state-methods-4"><a href="#state-methods-4" aria-hidden="true"></a></span>
+<span id="state-methods-5"><a href="#state-methods-5" aria-hidden="true"></a><span class="kw">def</span> drift(<span class="va">self</span>, dt: <span class="bu">float</span>, h: HamiltonianSystem[Vector]) <span class="op">-&gt;</span> State[Vector]:</span>
+<span id="state-methods-6"><a href="#state-methods-6" aria-hidden="true"></a>    <span class="va">self</span>.position <span class="op">+=</span> dt <span class="op">*</span> h.positionEquation(<span class="va">self</span>)</span>
+<span id="state-methods-7"><a href="#state-methods-7" aria-hidden="true"></a>    <span class="cf">return</span> <span class="va">self</span></span>
+<span id="state-methods-8"><a href="#state-methods-8" aria-hidden="true"></a></span>
+<span id="state-methods-9"><a href="#state-methods-9" aria-hidden="true"></a><span class="kw">def</span> wait(<span class="va">self</span>, dt: <span class="bu">float</span>) <span class="op">-&gt;</span> State[Vector]:</span>
+<span id="state-methods-10"><a href="#state-methods-10" aria-hidden="true"></a>    <span class="va">self</span>.time <span class="op">+=</span> dt</span>
+<span id="state-methods-11"><a href="#state-methods-11" aria-hidden="true"></a>    <span class="cf">return</span> <span class="va">self</span></span></code></pre></div>
+</div>
+<p>The combination of a position and momentum equation is known as a Hamiltonian system:</p>
+<div class="annotated-code">
+<p><span><em>«integrator»+</em></span></p>
+<div class="sourceCode" id="integrator"><pre class="sourceCode python"><code class="sourceCode python"><span id="integrator-1"><a href="#integrator-1" aria-hidden="true"></a><span class="kw">class</span> HamiltonianSystem(ABC, Generic[Vector]):</span>
+<span id="integrator-2"><a href="#integrator-2" aria-hidden="true"></a>    <span class="at">@abstractmethod</span></span>
+<span id="integrator-3"><a href="#integrator-3" aria-hidden="true"></a>    <span class="kw">def</span> positionEquation(<span class="va">self</span>, s: State[Vector]) <span class="op">-&gt;</span> Vector:</span>
+<span id="integrator-4"><a href="#integrator-4" aria-hidden="true"></a>        <span class="cf">raise</span> <span class="pp">NotImplementedError</span></span>
+<span id="integrator-5"><a href="#integrator-5" aria-hidden="true"></a></span>
+<span id="integrator-6"><a href="#integrator-6" aria-hidden="true"></a>    <span class="at">@abstractmethod</span></span>
+<span id="integrator-7"><a href="#integrator-7" aria-hidden="true"></a>    <span class="kw">def</span> momentumEquation(<span class="va">self</span>, s: State[Vector]) <span class="op">-&gt;</span> Vector:</span>
+<span id="integrator-8"><a href="#integrator-8" aria-hidden="true"></a>        <span class="cf">raise</span> <span class="pp">NotImplementedError</span></span></code></pre></div>
+</div>
+<p>A <code>Solver</code> is a function that takes a Hamiltonian system, an initial state and returns a final state. A <code>Stepper</code> translates one state to the next. The <code>HaltingCondition</code> is function of the state that determines when to stop integrating.</p>
+<div class="annotated-code">
+<p><span><em>«integrator»+</em></span></p>
+<div class="sourceCode" id="integrator"><pre class="sourceCode python"><code class="sourceCode python"><span id="integrator-1"><a href="#integrator-1" aria-hidden="true"></a>Solver <span class="op">=</span> Callable[[HamiltonianSystem[Vector], State[Vector]], State[Vector]]</span>
+<span id="integrator-2"><a href="#integrator-2" aria-hidden="true"></a>Stepper <span class="op">=</span> Callable[[State[Vector]], State[Vector]]</span>
+<span id="integrator-3"><a href="#integrator-3" aria-hidden="true"></a>HaltingCondition <span class="op">=</span> Callable[[State[Vector]], <span class="bu">bool</span>]</span></code></pre></div>
+</div>
+<p>Now we have the tools in hand to give a very consise definition of the Leap-frog integrator, namely: <code>kick dt</code> – <code>wait dt/2</code> – <code>drift dt</code> – <code>wait dt/2</code>.</p>
+<div class="annotated-code">
+<p><span><em>«integrator»+</em></span></p>
+<div class="sourceCode" id="integrator"><pre class="sourceCode python"><code class="sourceCode python"><span id="integrator-1"><a href="#integrator-1" aria-hidden="true"></a><span class="kw">def</span> leap_frog(dt: <span class="bu">float</span>, h: HamiltonianSystem[Vector], s: State[Vector]) <span class="op">-&gt;</span> State[Vector]:</span>
+<span id="integrator-2"><a href="#integrator-2" aria-hidden="true"></a>    <span class="cf">return</span> s.kick(dt, h).wait(dt<span class="op">/</span><span class="dv">2</span>).drift(dt, h).wait(dt<span class="op">/</span><span class="dv">2</span>)</span></code></pre></div>
+</div>
+<p>From the integrator we can construct a <code>Stepper</code> function (<code>step = partial(leap_frog, dt, system)</code>), that we can iterate until completion. After each step, the current state is saved to a file.</p>
+<div class="annotated-code">
+<p><span><em>«integrator»+</em></span></p>
+<div class="sourceCode" id="integrator"><pre class="sourceCode python"><code class="sourceCode python"><span id="integrator-1"><a href="#integrator-1" aria-hidden="true"></a><span class="kw">def</span> iterate_step(step: Stepper, halt: HaltingCondition, init: State[Vector]) <span class="op">-&gt;</span> State[Vector]:</span>
+<span id="integrator-2"><a href="#integrator-2" aria-hidden="true"></a>    state <span class="op">=</span> init</span>
+<span id="integrator-3"><a href="#integrator-3" aria-hidden="true"></a>    <span class="cf">while</span> <span class="kw">not</span> halt(state):</span>
+<span id="integrator-4"><a href="#integrator-4" aria-hidden="true"></a>        state <span class="op">=</span> step(state)</span>
+<span id="integrator-5"><a href="#integrator-5" aria-hidden="true"></a>        fn <span class="op">=</span> <span class="st">&#39;data/x.</span><span class="sc">{0:05d}</span><span class="st">.npy&#39;</span>.<span class="bu">format</span>(<span class="bu">int</span>(<span class="bu">round</span>(state.time<span class="op">*</span><span class="dv">1000</span>)))</span>
+<span id="integrator-6"><a href="#integrator-6" aria-hidden="true"></a>        <span class="cf">with</span> <span class="bu">open</span>(fn, <span class="st">&#39;wb&#39;</span>) <span class="im">as</span> f:</span>
+<span id="integrator-7"><a href="#integrator-7" aria-hidden="true"></a>            np.save(f, state.position)</span>
+<span id="integrator-8"><a href="#integrator-8" aria-hidden="true"></a>            np.save(f, state.momentum)</span>
+<span id="integrator-9"><a href="#integrator-9" aria-hidden="true"></a>    <span class="cf">return</span> state</span></code></pre></div>
+</div>
+<h1 id="poisson-solver">Poisson solver</h1>
+<p>Now for the hardest bit. We need to solve the Poisson equation.</p>
+<div class="annotated-code">
+<p><span><em>«solver»=</em></span></p>
+<div class="sourceCode" id="solver"><pre class="sourceCode python"><code class="sourceCode python"><span id="solver-1"><a href="#solver-1" aria-hidden="true"></a><span class="kw">class</span> PoissonVlasov(HamiltonianSystem[np.ndarray]):</span>
+<span id="solver-2"><a href="#solver-2" aria-hidden="true"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, box, cosmology, particle_mass):</span>
+<span id="solver-3"><a href="#solver-3" aria-hidden="true"></a>        <span class="va">self</span>.box <span class="op">=</span> box</span>
+<span id="solver-4"><a href="#solver-4" aria-hidden="true"></a>        <span class="va">self</span>.cosmology <span class="op">=</span> cosmology</span>
+<span id="solver-5"><a href="#solver-5" aria-hidden="true"></a>        <span class="va">self</span>.particle_mass <span class="op">=</span> particle_mass</span>
+<span id="solver-6"><a href="#solver-6" aria-hidden="true"></a>        <span class="va">self</span>._g <span class="op">=</span> gp.Gnuplot(persist<span class="op">=</span><span class="va">True</span>)</span>
+<span id="solver-7"><a href="#solver-7" aria-hidden="true"></a>        <span class="va">self</span>._g(<span class="st">&quot;set cbrange [0.2:50]&quot;</span>, <span class="st">&quot;set log cb&quot;</span>, <span class="st">&quot;set size square&quot;</span>,</span>
+<span id="solver-8"><a href="#solver-8" aria-hidden="true"></a>                <span class="st">&quot;set xrange [0:</span><span class="sc">{0}</span><span class="st">] ; set yrange [0:</span><span class="sc">{0}</span><span class="st">]&quot;</span>.<span class="bu">format</span>(box.N))</span>
+<span id="solver-9"><a href="#solver-9" aria-hidden="true"></a>        <span class="va">self</span>._g(<span class="st">&quot;set term x11&quot;</span>)</span>
+<span id="solver-10"><a href="#solver-10" aria-hidden="true"></a></span>
+<span id="solver-11"><a href="#solver-11" aria-hidden="true"></a>    <span class="op">&lt;&lt;</span>position<span class="op">-</span>equation<span class="op">&gt;&gt;</span></span>
+<span id="solver-12"><a href="#solver-12" aria-hidden="true"></a>    <span class="op">&lt;&lt;</span>momentum<span class="op">-</span>equation<span class="op">&gt;&gt;</span></span></code></pre></div>
+</div>
+<p>The position equation:</p>
+<p><span class="math display">\[\partial_a x = \frac{p}{a^2 \dot{a}}\]</span></p>
+<div class="annotated-code">
+<p><span><em>«position-equation»=</em></span></p>
+<div class="sourceCode" id="position-equation"><pre class="sourceCode python"><code class="sourceCode python"><span id="position-equation-1"><a href="#position-equation-1" aria-hidden="true"></a><span class="kw">def</span> positionEquation(<span class="va">self</span>, s: State[np.ndarray]) <span class="op">-&gt;</span> np.ndarray:</span>
+<span id="position-equation-2"><a href="#position-equation-2" aria-hidden="true"></a>    a <span class="op">=</span> s.time</span>
+<span id="position-equation-3"><a href="#position-equation-3" aria-hidden="true"></a>    da <span class="op">=</span> <span class="va">self</span>.cosmology.da(a)</span>
+<span id="position-equation-4"><a href="#position-equation-4" aria-hidden="true"></a>    <span class="cf">return</span> s.momentum <span class="op">/</span> (s.time<span class="op">**</span><span class="dv">2</span> <span class="op">*</span> da)</span></code></pre></div>
+</div>
+<p>The momentum equation:</p>
+<p><span class="math display">\[\partial_a p = -\frac{1}{\dot{a}} \nabla \Phi,\]</span></p>
+<p>where</p>
+<p><span class="math display">\[\nabla^2 \Phi = \frac{G}{a} \delta.\]</span></p>
+<p>We first compute <span class="math inline">\(\delta\)</span> using the cloud-in-cell mass deposition <code>md_cic()</code> function. Then we integrate twice by method of Fourier transform. To compute the accelleration we take the second-order approximation of the gradient function.</p>
+<div class="annotated-code">
+<p><span><em>«momentum-equation»=</em></span></p>
+<div class="sourceCode" id="momentum-equation"><pre class="sourceCode python"><code class="sourceCode python"><span id="momentum-equation-1"><a href="#momentum-equation-1" aria-hidden="true"></a><span class="kw">def</span> momentumEquation(<span class="va">self</span>, s: State[np.ndarray]) <span class="op">-&gt;</span> np.ndarray:</span>
+<span id="momentum-equation-2"><a href="#momentum-equation-2" aria-hidden="true"></a>    a <span class="op">=</span> s.time</span>
+<span id="momentum-equation-3"><a href="#momentum-equation-3" aria-hidden="true"></a>    da <span class="op">=</span> <span class="va">self</span>.cosmology.da(a)</span>
+<span id="momentum-equation-4"><a href="#momentum-equation-4" aria-hidden="true"></a>    x_grid <span class="op">=</span> s.position <span class="op">/</span> <span class="va">self</span>.box.res</span>
+<span id="momentum-equation-5"><a href="#momentum-equation-5" aria-hidden="true"></a>    delta <span class="op">=</span> md_cic(<span class="va">self</span>.box, x_grid) <span class="op">*</span> <span class="va">self</span>.particle_mass <span class="op">-</span> <span class="fl">1.0</span></span>
+<span id="momentum-equation-6"><a href="#momentum-equation-6" aria-hidden="true"></a>    <span class="va">self</span>._g(gp.plot_data(gp.array(delta.T<span class="op">+</span><span class="dv">1</span>, <span class="st">&quot;t&#39;&#39; w image&quot;</span>)))</span>
+<span id="momentum-equation-7"><a href="#momentum-equation-7" aria-hidden="true"></a>    delta_f <span class="op">=</span> np.fft.fftn(delta)</span>
+<span id="momentum-equation-8"><a href="#momentum-equation-8" aria-hidden="true"></a>    kernel <span class="op">=</span> cft.Potential()(<span class="va">self</span>.box.K)</span>
+<span id="momentum-equation-9"><a href="#momentum-equation-9" aria-hidden="true"></a>    phi <span class="op">=</span> np.fft.ifftn(delta_f <span class="op">*</span> kernel).real <span class="op">*</span> <span class="va">self</span>.cosmology.G <span class="op">/</span> a</span>
+<span id="momentum-equation-10"><a href="#momentum-equation-10" aria-hidden="true"></a>    acc_x <span class="op">=</span> Interp2D(gradient_2nd_order(phi, <span class="dv">0</span>))</span>
+<span id="momentum-equation-11"><a href="#momentum-equation-11" aria-hidden="true"></a>    acc_y <span class="op">=</span> Interp2D(gradient_2nd_order(phi, <span class="dv">1</span>))</span>
+<span id="momentum-equation-12"><a href="#momentum-equation-12" aria-hidden="true"></a>    acc <span class="op">=</span> np.c_[acc_x(x_grid), acc_y(x_grid)] <span class="op">/</span> <span class="va">self</span>.box.res</span>
+<span id="momentum-equation-13"><a href="#momentum-equation-13" aria-hidden="true"></a>    <span class="cf">return</span> <span class="op">-</span>acc <span class="op">/</span> da</span></code></pre></div>
+</div>
+<h1 id="the-zeldovich-approximation">The Zeldovich Approximation</h1>
+<p>To bootstrap the simulation, we need to create a set of particles and assign velocities. This is done using the Zeldovich Approximation.</p>
+<div class="annotated-code">
+<p><span><em>«initialization»=</em></span></p>
+<div class="sourceCode" id="initialization"><pre class="sourceCode python"><code class="sourceCode python"><span id="initialization-1"><a href="#initialization-1" aria-hidden="true"></a><span class="kw">def</span> a2r(B, X):</span>
+<span id="initialization-2"><a href="#initialization-2" aria-hidden="true"></a>    <span class="cf">return</span> X.transpose([<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">0</span>]).reshape([B.N<span class="op">**</span><span class="dv">2</span>, <span class="dv">2</span>])</span>
+<span id="initialization-3"><a href="#initialization-3" aria-hidden="true"></a></span>
+<span id="initialization-4"><a href="#initialization-4" aria-hidden="true"></a><span class="kw">def</span> r2a(B, x):</span>
+<span id="initialization-5"><a href="#initialization-5" aria-hidden="true"></a>    <span class="cf">return</span> x.reshape([B.N, B.N, <span class="dv">2</span>]).transpose([<span class="dv">2</span>,<span class="dv">0</span>,<span class="dv">1</span>])</span>
+<span id="initialization-6"><a href="#initialization-6" aria-hidden="true"></a></span>
+<span id="initialization-7"><a href="#initialization-7" aria-hidden="true"></a><span class="kw">class</span> Zeldovich:</span>
+<span id="initialization-8"><a href="#initialization-8" aria-hidden="true"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, B_mass: Box, B_force: Box, cosmology: Cosmology, phi: np.ndarray):</span>
+<span id="initialization-9"><a href="#initialization-9" aria-hidden="true"></a>        <span class="va">self</span>.bm <span class="op">=</span> B_mass</span>
+<span id="initialization-10"><a href="#initialization-10" aria-hidden="true"></a>        <span class="va">self</span>.bf <span class="op">=</span> B_force</span>
+<span id="initialization-11"><a href="#initialization-11" aria-hidden="true"></a>        <span class="va">self</span>.cosmology  <span class="op">=</span> cosmology</span>
+<span id="initialization-12"><a href="#initialization-12" aria-hidden="true"></a>        <span class="va">self</span>.u <span class="op">=</span> np.array([<span class="op">-</span>gradient_2nd_order(phi, <span class="dv">0</span>),</span>
+<span id="initialization-13"><a href="#initialization-13" aria-hidden="true"></a>                           <span class="op">-</span>gradient_2nd_order(phi, <span class="dv">1</span>)]) <span class="op">/</span> <span class="va">self</span>.bm.res</span>
+<span id="initialization-14"><a href="#initialization-14" aria-hidden="true"></a></span>
+<span id="initialization-15"><a href="#initialization-15" aria-hidden="true"></a>    <span class="kw">def</span> state(<span class="va">self</span>, a_init: <span class="bu">float</span>) <span class="op">-&gt;</span> State[np.ndarray]:</span>
+<span id="initialization-16"><a href="#initialization-16" aria-hidden="true"></a>        X <span class="op">=</span> a2r(<span class="va">self</span>.bm, np.indices(<span class="va">self</span>.bm.shape) <span class="op">*</span> <span class="va">self</span>.bm.res <span class="op">+</span> a_init <span class="op">*</span> <span class="va">self</span>.u)</span>
+<span id="initialization-17"><a href="#initialization-17" aria-hidden="true"></a>        P <span class="op">=</span> a2r(<span class="va">self</span>.bm, a_init <span class="op">*</span> <span class="va">self</span>.u)</span>
+<span id="initialization-18"><a href="#initialization-18" aria-hidden="true"></a>        <span class="cf">return</span> State(time<span class="op">=</span>a_init, position<span class="op">=</span>X, momentum<span class="op">=</span>P)</span>
+<span id="initialization-19"><a href="#initialization-19" aria-hidden="true"></a></span>
+<span id="initialization-20"><a href="#initialization-20" aria-hidden="true"></a>    <span class="at">@property</span></span>
+<span id="initialization-21"><a href="#initialization-21" aria-hidden="true"></a>    <span class="kw">def</span> particle_mass(<span class="va">self</span>):</span>
+<span id="initialization-22"><a href="#initialization-22" aria-hidden="true"></a>        <span class="cf">return</span> (<span class="va">self</span>.bf.N <span class="op">/</span> <span class="va">self</span>.bm.N)<span class="op">**</span><span class="va">self</span>.bm.dim</span></code></pre></div>
+</div>
+<p>The main function</p>
+<div class="annotated-code">
+<p><span><em>«main»=</em></span></p>
+<div class="sourceCode" id="main"><pre class="sourceCode python"><code class="sourceCode python"><span id="main-1"><a href="#main-1" aria-hidden="true"></a><span class="cf">if</span> <span class="va">__name__</span> <span class="op">==</span> <span class="st">&quot;__main__&quot;</span>:</span>
+<span id="main-2"><a href="#main-2" aria-hidden="true"></a>    <span class="im">from</span> . <span class="im">import</span> cft</span>
+<span id="main-3"><a href="#main-3" aria-hidden="true"></a></span>
+<span id="main-4"><a href="#main-4" aria-hidden="true"></a>    N <span class="op">=</span> <span class="dv">256</span></span>
+<span id="main-5"><a href="#main-5" aria-hidden="true"></a>    B_m <span class="op">=</span> Box(<span class="dv">2</span>, N, <span class="fl">50.0</span>)</span>
+<span id="main-6"><a href="#main-6" aria-hidden="true"></a></span>
+<span id="main-7"><a href="#main-7" aria-hidden="true"></a>    A <span class="op">=</span> <span class="dv">10</span></span>
+<span id="main-8"><a href="#main-8" aria-hidden="true"></a>    seed <span class="op">=</span> <span class="dv">4</span></span>
+<span id="main-9"><a href="#main-9" aria-hidden="true"></a>    Power_spectrum <span class="op">=</span> cft.Power_law(<span class="op">-</span><span class="fl">0.5</span>) <span class="op">*</span> cft.Scale(B_m, <span class="fl">0.2</span>) <span class="op">*</span> cft.Cutoff(B_m)</span>
+<span id="main-10"><a href="#main-10" aria-hidden="true"></a>    phi <span class="op">=</span> cft.garfield(B_m, Power_spectrum, cft.Potential(), seed) <span class="op">*</span> A</span>
+<span id="main-11"><a href="#main-11" aria-hidden="true"></a></span>
+<span id="main-12"><a href="#main-12" aria-hidden="true"></a>    force_box <span class="op">=</span> cft.Box(<span class="dv">2</span>, N<span class="op">*</span><span class="dv">2</span>, B_m.L)</span>
+<span id="main-13"><a href="#main-13" aria-hidden="true"></a>    za <span class="op">=</span> Zeldovich(B_m, force_box, EdS, phi)</span>
+<span id="main-14"><a href="#main-14" aria-hidden="true"></a>    state <span class="op">=</span> za.state(<span class="fl">0.02</span>)</span>
+<span id="main-15"><a href="#main-15" aria-hidden="true"></a>    system <span class="op">=</span> PoissonVlasov(force_box, EdS, za.particle_mass)</span>
+<span id="main-16"><a href="#main-16" aria-hidden="true"></a>    stepper <span class="op">=</span> partial(leap_frog, <span class="fl">0.02</span>, system)</span>
+<span id="main-17"><a href="#main-17" aria-hidden="true"></a>    iterate_step(stepper, <span class="kw">lambda</span> s: s.time <span class="op">&gt;</span> <span class="fl">4.0</span>, state)</span></code></pre></div>
+</div>
+<h1 id="constrained-fields">Constrained fields</h1>
+<p>The <code>nbody.cft</code> library computes Gaussian random fields, and you can specify constraints on these fields.</p>
+</div></main>
+
+
+
+<!-- Bootstrap 4.5.0 -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
+
+<!-- Mathjax -->
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</body>
+</html>
