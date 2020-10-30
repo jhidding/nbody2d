@@ -5,3 +5,4 @@ notebooks
 .mypy_cache
 .vscode
 .entangled
+.ipynb_checkpoints
