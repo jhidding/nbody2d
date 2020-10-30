@@ -3,7 +3,33 @@ title: 2D particle-mesh n-body code
 author: Johan Hidding
 ---
 
-This is a particle-mesh n-body code for cosmological n-body simulations. This code has several uses. For many methods of analysis in cosmology it can be very helpful to have a 2D sample available to test them with. This code is very nice to play around with for students, since it is written in 100% Python. Lastly, having 2D simulations can give a great deal of insight.
+This is a particle-mesh n-body code for cosmological n-body simulations. This code has several uses.
+
+- Testing new methods: For many methods of analysis in cosmology it can be very helpful to have a 2D sample available to test them with.
+- Teaching: This code is very nice to play around with for students, since it is written in 100% Python.
+- Learning: Lastly, having 2D simulations can give a great deal of insight.
+
+To run the code, you need to have installed:
+
+- Python 3.8
+- Numpy
+- Scipy
+- Gnuplot
+
+Run with:
+
+    python -m nbody.nbody
+
+# Code structure
+The code is structured in the following components:
+
+- Cosmology: we need to know Hubble factor $H$ as a function of the expansion factor $a$.
+- Mass deposition: PM codes need a way to convert from particles to a grid representation of the density.
+- Interpolation: Then we need to go back and interpolate grid quantities on particle coordinates.
+- Integrator: Cosmic structure formation is described by a Hamiltonian system of equations: we need to solve these, in this case using the Leap-frog method.
+- Solver: To solve the Poisson equation, we need to integrate the density in Fourier space to obtain the potential.
+- Initialization: The simulation is started using the Zeldovich Approximation.
+- Main: glue everything together.
 
 ``` {.python file=nbody/nbody.py}
 <<imports>>
@@ -58,7 +84,7 @@ def OmegaK(self):
     return 1 - self.OmegaM - self.OmegaL
 ```
 
-and the gravitational constant,
+and the (a?) gravitational constant,
 
 $$G = \frac{3}{2} \Omega_{m} H_0^2.$${#eq:grav-const}
 

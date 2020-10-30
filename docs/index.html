@@ -99,6 +99,7 @@ code span.wa { color: #8f5902; font-weight: bold; font-style: italic; } /* Warni
         by <i>Johan Hidding</i></span></a>
 <div class="collapse navbar-collapse" id="navbarSupportedContent">
 <ul>
+<li><a href="#code-structure">Code structure</a></li>
 <li><a href="#the-box">The Box</a></li>
 <li><a href="#cosmology">Cosmology</a></li>
 <li><a href="#mass-deposition">Mass deposition</a></li>
@@ -117,18 +118,43 @@ code span.wa { color: #8f5902; font-weight: bold; font-style: italic; } /* Warni
  -->
 
 <main role="main" class="flex-fill"><div class="container my-5">
-<p>This is a particle-mesh n-body code for cosmological n-body simulations. This code has several uses. For many methods of analysis in cosmology it can be very helpful to have a 2D sample available to test them with. This code is very nice to play around with for students, since it is written in 100% Python. Lastly, having 2D simulations can give a great deal of insight.</p>
+<p>This is a particle-mesh n-body code for cosmological n-body simulations. This code has several uses.</p>
+<ul>
+<li>Testing new methods: For many methods of analysis in cosmology it can be very helpful to have a 2D sample available to test them with.</li>
+<li>Teaching: This code is very nice to play around with for students, since it is written in 100% Python.</li>
+<li>Learning: Lastly, having 2D simulations can give a great deal of insight.</li>
+</ul>
+<p>To run the code, you need to have installed:</p>
+<ul>
+<li>Python 3.8</li>
+<li>Numpy</li>
+<li>Scipy</li>
+<li>Gnuplot</li>
+</ul>
+<p>Run with:</p>
+<pre><code>python -m nbody.nbody</code></pre>
+<h1 id="code-structure">Code structure</h1>
+<p>The code is structured in the following components:</p>
+<ul>
+<li>Cosmology: we need to know Hubble factor <span class="math inline">\(H\)</span> as a function of the expansion factor <span class="math inline">\(a\)</span>.</li>
+<li>Mass deposition: PM codes need a way to convert from particles to a grid representation of the density.</li>
+<li>Interpolation: Then we need to go back and interpolate grid quantities on particle coordinates.</li>
+<li>Integrator: Cosmic structure formation is described by a Hamiltonian system of equations: we need to solve these, in this case using the Leap-frog method.</li>
+<li>Solver: To solve the Poisson equation, we need to integrate the density in Fourier space to obtain the potential.</li>
+<li>Initialization: The simulation is started using the Zeldovich Approximation.</li>
+<li>Main: glue everything together.</li>
+</ul>
 <div class="annotated-code">
 <p><span><em>«nbody/nbody.py»=</em></span></p>
-<div class="sourceCode" id="cb1" data-file="nbody/nbody.py"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="op">&lt;&lt;</span>imports<span class="op">&gt;&gt;</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a><span class="op">&lt;&lt;</span>cosmology<span class="op">&gt;&gt;</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a><span class="op">&lt;&lt;</span>mass<span class="op">-</span>deposition<span class="op">&gt;&gt;</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a><span class="op">&lt;&lt;</span>interpolation<span class="op">&gt;&gt;</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true"></a><span class="op">&lt;&lt;</span>integrator<span class="op">&gt;&gt;</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true"></a><span class="op">&lt;&lt;</span>solver<span class="op">&gt;&gt;</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true"></a><span class="op">&lt;&lt;</span>initialization<span class="op">&gt;&gt;</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true"></a><span class="op">&lt;&lt;</span>main<span class="op">&gt;&gt;</span></span></code></pre></div>
+<div class="sourceCode" id="cb2" data-file="nbody/nbody.py"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="op">&lt;&lt;</span>imports<span class="op">&gt;&gt;</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a><span class="op">&lt;&lt;</span>cosmology<span class="op">&gt;&gt;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a><span class="op">&lt;&lt;</span>mass<span class="op">-</span>deposition<span class="op">&gt;&gt;</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a><span class="op">&lt;&lt;</span>interpolation<span class="op">&gt;&gt;</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true"></a><span class="op">&lt;&lt;</span>integrator<span class="op">&gt;&gt;</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true"></a><span class="op">&lt;&lt;</span>solver<span class="op">&gt;&gt;</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true"></a><span class="op">&lt;&lt;</span>initialization<span class="op">&gt;&gt;</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true"></a><span class="op">&lt;&lt;</span>main<span class="op">&gt;&gt;</span></span></code></pre></div>
 </div>
 <p>Some things we will definitely need:</p>
 <div class="annotated-code">
@@ -166,7 +192,7 @@ code span.wa { color: #8f5902; font-weight: bold; font-style: italic; } /* Warni
 <span id="cosmology-methods-2"><a href="#cosmology-methods-2" aria-hidden="true"></a><span class="kw">def</span> OmegaK(<span class="va">self</span>):</span>
 <span id="cosmology-methods-3"><a href="#cosmology-methods-3" aria-hidden="true"></a>    <span class="cf">return</span> <span class="dv">1</span> <span class="op">-</span> <span class="va">self</span>.OmegaM <span class="op">-</span> <span class="va">self</span>.OmegaL</span></code></pre></div>
 </div>
-<p>and the gravitational constant,</p>
+<p>and the (a?) gravitational constant,</p>
 <p><span class="math display">\[G = \frac{3}{2} \Omega_{m} H_0^2.\]</span>{#eq:grav-const}</p>
 <div class="annotated-code">
 <p><span><em>«cosmology-methods»+</em></span></p>
