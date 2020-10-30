@@ -106,15 +106,8 @@ code span.wa { color: #8f5902; font-weight: bold; font-style: italic; } /* Warni
         by <i>Johan Hidding</i></span></a>
 <div class="collapse navbar-collapse" id="navbarSupportedContent">
 <ul>
-<li><a href="#code-structure">Code structure</a></li>
-<li><a href="#the-box">The Box</a></li>
-<li><a href="#cosmology">Cosmology</a></li>
-<li><a href="#mass-deposition">Mass deposition</a></li>
-<li><a href="#interpolation">Interpolation</a></li>
-<li><a href="#leap-frog-integrator">Leap-frog integrator</a></li>
-<li><a href="#poisson-solver">Poisson solver</a></li>
-<li><a href="#the-zeldovich-approximation">The Zeldovich Approximation</a></li>
-<li><a href="#constrained-fields">Constrained fields</a></li>
+<li><a href="#instructions">Instructions</a></li>
+<li><a href="#the-simulation">The simulation</a></li>
 <li><a href="#plotting-the-phase-space-submanifold">Plotting the phase-space submanifold</a></li>
 </ul>
 </div>
@@ -126,6 +119,7 @@ code span.wa { color: #8f5902; font-weight: bold; font-style: italic; } /* Warni
  -->
 
 <main role="main" class="flex-fill"><div class="container my-5">
+<p><a href="https://entangled.github.io/"><img src="https://img.shields.io/badge/entangled-Use%20the%20source!-%2300aeff" alt="Entangled badge" /></a> <a href="https://doi.org/10.5281/zenodo.4158731"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.4158731.svg" alt="DOI" /></a></p>
 <p>This is a particle-mesh n-body code for cosmological n-body simulations. This code has several uses.</p>
 <ul>
 <li>Testing new methods: For many methods of analysis in cosmology it can be very helpful to have a 2D sample available to test them with.</li>
@@ -135,6 +129,7 @@ code span.wa { color: #8f5902; font-weight: bold; font-style: italic; } /* Warni
 <figure>
 <img src="figures/x.collage.png" alt="A sample simulation, three time steps; the bottom row is a zoom-in." /><figcaption aria-hidden="true">A sample simulation, three time steps; the bottom row is a zoom-in.</figcaption>
 </figure>
+<h1 id="instructions">Instructions</h1>
 <p>To run the code, you need to have installed:</p>
 <ul>
 <li>Python 3.8</li>
@@ -144,7 +139,11 @@ code span.wa { color: #8f5902; font-weight: bold; font-style: italic; } /* Warni
 </ul>
 <p>Run with:</p>
 <pre><code>python -m nbody.nbody</code></pre>
-<h1 id="code-structure">Code structure</h1>
+<h2 id="license">License</h2>
+<p>Copyright 2015-2020 Johan Hidding; This code is licensed under the Apache license version 2.0, see <a href="https://www.apache.org/licenses/LICENSE-2.0">LICENSE</a>.</p>
+<h2 id="citation">Citation</h2>
+<p>If you use this code in scientific publication, please cite it using <a href="https://doi.org/10.5281/zenodo.4158731">DOI:10.5281/zenodo.4158731</a>.</p>
+<h1 id="the-simulation">The simulation</h1>
 <p>The code is structured in the following components:</p>
 <ul>
 <li>Cosmology: we need to know Hubble factor <span class="math inline">\(H\)</span> as a function of the expansion factor <span class="math inline">\(a\)</span>.</li>
@@ -181,9 +180,9 @@ code span.wa { color: #8f5902; font-weight: bold; font-style: italic; } /* Warni
 <span id="imports-9"><a href="#imports-9" aria-hidden="true"></a><span class="im">from</span> typing <span class="im">import</span> Generic, TypeVar, Callable</span>
 <span id="imports-10"><a href="#imports-10" aria-hidden="true"></a><span class="im">from</span> functools <span class="im">import</span> partial</span></code></pre></div>
 </div>
-<h1 id="the-box">The Box</h1>
+<h2 id="the-box">The Box</h2>
 <p>The <code>Box</code> class contains all information about the simulation box: mainly the size in pixels and the physical size it represents. All operations will assume periodic boundary conditions. In <code>numpy</code> this is achieved by using <code>np.roll</code> to shift a grid along a given axis.</p>
-<h1 id="cosmology">Cosmology</h1>
+<h2 id="cosmology">Cosmology</h2>
 <p>The background cosmology is described by a function giving the scale function <span class="math inline">\(a(t)\)</span> as a function of time. In standard Big Bang cosmology this scale function is computed from three parameters (ignoring baryons): <span class="math inline">\(H_0\)</span> the Hubble expansion rate at <span class="math inline">\(t_0\)</span> (<span class="math inline">\(t_0\)</span> being now), <span class="math inline">\(\Omega_{m}\)</span> the matter density expressed as a fraction of the critical density, and <span class="math inline">\(\Omega_{\Lambda}\)</span> the dark energy (cosmological constant) component, again expressed as a fraction of the critical density.</p>
 <div class="annotated-code">
 <p><span><em>«cosmology»=</em></span></p>
@@ -239,7 +238,7 @@ code span.wa { color: #8f5902; font-weight: bold; font-style: italic; } /* Warni
 <div class="sourceCode" id="cosmology"><pre class="sourceCode python"><code class="sourceCode python"><span id="cosmology-1"><a href="#cosmology-1" aria-hidden="true"></a>LCDM <span class="op">=</span> Cosmology(<span class="fl">68.0</span>, <span class="fl">0.31</span>, <span class="fl">0.69</span>)</span>
 <span id="cosmology-2"><a href="#cosmology-2" aria-hidden="true"></a>EdS <span class="op">=</span> Cosmology(<span class="fl">70.0</span>, <span class="fl">1.0</span>, <span class="fl">0.0</span>)</span></code></pre></div>
 </div>
-<h1 id="mass-deposition">Mass deposition</h1>
+<h2 id="mass-deposition">Mass deposition</h2>
 <p>To do the mass deposition, that is, convert the position of particles into a 2D mesh of densities, we use the cloud-in-cell method. Every particle is smeared out over its four nearest neighbours, weighted by the distance to each neighbour. This principle is similar (but inverse) to a linear interpolation scheme: we compute the integer index of the grid-cell the particle belongs to, and use the floating-point remainder to compute the fractions in all the four neighbours. In this case however, we abuse the <code>histogram2d</code> function in <code>numpy</code> to do the interpolation for us.</p>
 <div class="annotated-code">
 <p><span><em>«mass-deposition»=</em></span></p>
@@ -268,7 +267,7 @@ code span.wa { color: #8f5902; font-weight: bold; font-style: italic; } /* Warni
 <span id="mass-deposition-23"><a href="#mass-deposition-23" aria-hidden="true"></a></span>
 <span id="mass-deposition-24"><a href="#mass-deposition-24" aria-hidden="true"></a>    <span class="cf">return</span> rho</span></code></pre></div>
 </div>
-<h1 id="interpolation">Interpolation</h1>
+<h2 id="interpolation">Interpolation</h2>
 <p>To read a value from a grid, given a particle position, we need to interpolate. This routine performs linear interpolation on the grid.</p>
 <div class="annotated-code">
 <p><span><em>«interpolation»=</em></span></p>
@@ -298,7 +297,7 @@ code span.wa { color: #8f5902; font-weight: bold; font-style: italic; } /* Warni
 <span id="interpolation-24"><a href="#interpolation-24" aria-hidden="true"></a>    <span class="cf">return</span>   <span class="fl">1.</span><span class="op">/</span><span class="dv">12</span> <span class="op">*</span> np.roll(F,  <span class="dv">2</span>, axis<span class="op">=</span>i) <span class="op">-</span> <span class="fl">2.</span><span class="op">/</span><span class="dv">3</span>  <span class="op">*</span> np.roll(F,  <span class="dv">1</span>, axis<span class="op">=</span>i) <span class="op">\</span></span>
 <span id="interpolation-25"><a href="#interpolation-25" aria-hidden="true"></a>           <span class="op">+</span> <span class="fl">2.</span><span class="op">/</span><span class="dv">3</span>  <span class="op">*</span> np.roll(F, <span class="op">-</span><span class="dv">1</span>, axis<span class="op">=</span>i) <span class="op">-</span> <span class="fl">1.</span><span class="op">/</span><span class="dv">12</span> <span class="op">*</span> np.roll(F, <span class="op">-</span><span class="dv">2</span>, axis<span class="op">=</span>i)</span></code></pre></div>
 </div>
-<h1 id="leap-frog-integrator">Leap-frog integrator</h1>
+<h2 id="leap-frog-integrator">Leap-frog integrator</h2>
 <p>The Leap-frog method is a generic method for solving Hamiltonian systems. We divide the integration into a <em>kick</em> and <em>drift</em> stage. In the Leap-frog method, the kicks happen in between the drifts.</p>
 <p>It is nice to write this part of the program in a formal way. We define an abstract <code>Vector</code> type, which will store the position and momentum variables.</p>
 <div class="annotated-code">
@@ -380,7 +379,7 @@ code span.wa { color: #8f5902; font-weight: bold; font-style: italic; } /* Warni
 <span id="integrator-8"><a href="#integrator-8" aria-hidden="true"></a>            np.save(f, state.momentum)</span>
 <span id="integrator-9"><a href="#integrator-9" aria-hidden="true"></a>    <span class="cf">return</span> state</span></code></pre></div>
 </div>
-<h1 id="poisson-solver">Poisson solver</h1>
+<h2 id="poisson-solver">Poisson solver</h2>
 <p>Now for the hardest bit. We need to solve the Poisson equation.</p>
 <div class="annotated-code">
 <p><span><em>«solver»=</em></span></p>
@@ -398,7 +397,7 @@ code span.wa { color: #8f5902; font-weight: bold; font-style: italic; } /* Warni
 <span id="solver-12"><a href="#solver-12" aria-hidden="true"></a>    <span class="op">&lt;&lt;</span>momentum<span class="op">-</span>equation<span class="op">&gt;&gt;</span></span></code></pre></div>
 </div>
 <p>The position equation:</p>
-<p><span id="eq:position" class="eqnos"><span class="math display">\[\partial_a x = \frac{p}{a^2 \dot{a}}\]</span><span class="eqnos-number">(1)</span></span></p>
+<p><span id="eq:position" class="eqnos"><span class="math display">\[\partial_a x = \frac{p}{a^2 \dot{a}}\]</span><span class="eqnos-number">(4)</span></span></p>
 <div class="annotated-code">
 <p><span><em>«position-equation»=</em></span></p>
 <div class="sourceCode" id="position-equation"><pre class="sourceCode python"><code class="sourceCode python"><span id="position-equation-1"><a href="#position-equation-1" aria-hidden="true"></a><span class="kw">def</span> positionEquation(<span class="va">self</span>, s: State[np.ndarray]) <span class="op">-&gt;</span> np.ndarray:</span>
@@ -407,9 +406,9 @@ code span.wa { color: #8f5902; font-weight: bold; font-style: italic; } /* Warni
 <span id="position-equation-4"><a href="#position-equation-4" aria-hidden="true"></a>    <span class="cf">return</span> s.momentum <span class="op">/</span> (s.time<span class="op">**</span><span class="dv">2</span> <span class="op">*</span> da)</span></code></pre></div>
 </div>
 <p>The momentum equation:</p>
-<p><span id="eq:momentum" class="eqnos"><span class="math display">\[\partial_a p = -\frac{1}{\dot{a}} \nabla \Phi,\]</span><span class="eqnos-number">(2)</span></span></p>
+<p><span id="eq:momentum" class="eqnos"><span class="math display">\[\partial_a p = -\frac{1}{\dot{a}} \nabla \Phi,\]</span><span class="eqnos-number">(5)</span></span></p>
 <p>where</p>
-<p><span id="eq:poisson" class="eqnos"><span class="math display">\[\nabla^2 \Phi = \frac{G}{a} \delta.\]</span><span class="eqnos-number">(3)</span></span></p>
+<p><span id="eq:poisson" class="eqnos"><span class="math display">\[\nabla^2 \Phi = \frac{G}{a} \delta.\]</span><span class="eqnos-number">(6)</span></span></p>
 <p>We first compute <span class="math inline">\(\delta\)</span> using the cloud-in-cell mass deposition <code>md_cic()</code> function. Then we integrate twice by method of Fourier transform. To compute the accelleration we take the second-order approximation of the gradient function.</p>
 <div class="annotated-code">
 <p><span><em>«momentum-equation»=</em></span></p>
@@ -427,7 +426,7 @@ code span.wa { color: #8f5902; font-weight: bold; font-style: italic; } /* Warni
 <span id="momentum-equation-12"><a href="#momentum-equation-12" aria-hidden="true"></a>    acc <span class="op">=</span> np.c_[acc_x(x_grid), acc_y(x_grid)] <span class="op">/</span> <span class="va">self</span>.box.res</span>
 <span id="momentum-equation-13"><a href="#momentum-equation-13" aria-hidden="true"></a>    <span class="cf">return</span> <span class="op">-</span>acc <span class="op">/</span> da</span></code></pre></div>
 </div>
-<h1 id="the-zeldovich-approximation">The Zeldovich Approximation</h1>
+<h2 id="the-zeldovich-approximation">The Zeldovich Approximation</h2>
 <p>To bootstrap the simulation, we need to create a set of particles and assign velocities. This is done using the Zeldovich Approximation.</p>
 <div class="annotated-code">
 <p><span><em>«initialization»=</em></span></p>
@@ -475,7 +474,7 @@ code span.wa { color: #8f5902; font-weight: bold; font-style: italic; } /* Warni
 <span id="main-16"><a href="#main-16" aria-hidden="true"></a>    stepper <span class="op">=</span> partial(leap_frog, <span class="fl">0.02</span>, system)</span>
 <span id="main-17"><a href="#main-17" aria-hidden="true"></a>    iterate_step(stepper, <span class="kw">lambda</span> s: s.time <span class="op">&gt;</span> <span class="fl">4.0</span>, state)</span></code></pre></div>
 </div>
-<h1 id="constrained-fields">Constrained fields</h1>
+<h2 id="constrained-fields">Constrained fields</h2>
 <p>The <code>nbody.cft</code> library computes Gaussian random fields, and you can specify constraints on these fields.</p>
 <h1 id="plotting-the-phase-space-submanifold">Plotting the phase-space submanifold</h1>
 <p>Instead of plotting particles, it is very nice to see the structures from phase-space. We take the original ordering of the particles at time <span class="math inline">\(a=0\)</span>, and triangulate that. Then we plot this triangulation as it folds and wrinkles when particles start to move.</p>

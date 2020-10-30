@@ -2,6 +2,8 @@
 title: 2D particle-mesh n-body code
 author: Johan Hidding
 ---
+[![Entangled badge](https://img.shields.io/badge/entangled-Use%20the%20source!-%2300aeff)](https://entangled.github.io/)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4158731.svg)](https://doi.org/10.5281/zenodo.4158731)
 
 This is a particle-mesh n-body code for cosmological n-body simulations. This code has several uses.
 
@@ -11,6 +13,7 @@ This is a particle-mesh n-body code for cosmological n-body simulations. This co
 
 ![A sample simulation, three time steps; the bottom row is a zoom-in.](figures/x.collage.png)
 
+# Instructions
 To run the code, you need to have installed:
 
 - Python 3.8
@@ -22,7 +25,13 @@ Run with:
 
     python -m nbody.nbody
 
-# Code structure
+## License
+Copyright 2015-2020 Johan Hidding; This code is licensed under the Apache license version 2.0, see [LICENSE](https://www.apache.org/licenses/LICENSE-2.0).
+
+## Citation
+If you use this code in scientific publication, please cite it using [DOI:10.5281/zenodo.4158731](https://doi.org/10.5281/zenodo.4158731).
+
+# The simulation
 The code is structured in the following components:
 
 - Cosmology: we need to know Hubble factor $H$ as a function of the expansion factor $a$.
@@ -60,10 +69,10 @@ from typing import Generic, TypeVar, Callable
 from functools import partial
 ```
 
-# The Box
+## The Box
 The `Box` class contains all information about the simulation box: mainly the size in pixels and the physical size it represents. All operations will assume periodic boundary conditions. In `numpy` this is achieved by using `np.roll` to shift a grid along a given axis.
 
-# Cosmology
+## Cosmology
 The background cosmology is described by a function giving the scale function $a(t)$ as a function of time. In standard Big Bang cosmology this scale function is computed from three parameters (ignoring baryons): $H_0$ the Hubble expansion rate at $t_0$ ($t_0$ being now), $\Omega_{m}$ the matter density expressed as a fraction of the critical density, and $\Omega_{\Lambda}$ the dark energy (cosmological constant) component, again expressed as a fraction of the critical density.
 
 ``` {.python #cosmology}
@@ -128,7 +137,7 @@ LCDM = Cosmology(68.0, 0.31, 0.69)
 EdS = Cosmology(70.0, 1.0, 0.0)
 ```
 
-# Mass deposition
+## Mass deposition
 To do the mass deposition, that is, convert the position of particles into a 2D mesh of densities, we use the cloud-in-cell method. Every particle is smeared out over its four nearest neighbours, weighted by the distance to each neighbour. This principle is similar (but inverse) to a linear interpolation scheme: we compute the integer index of the grid-cell the particle belongs to, and use the floating-point remainder to compute the fractions in all the four neighbours. In this case however, we abuse the `histogram2d` function in `numpy` to do the interpolation for us.
 
 ``` {.python #mass-deposition}
@@ -158,7 +167,7 @@ def md_cic(B: Box, X: np.ndarray) -> np.ndarray:
     return rho
 ```
 
-# Interpolation
+## Interpolation
 To read a value from a grid, given a particle position, we need to interpolate. This routine performs linear interpolation on the grid.
 
 ``` {.python #interpolation}
@@ -189,7 +198,7 @@ def gradient_2nd_order(F, i):
            + 2./3  * np.roll(F, -1, axis=i) - 1./12 * np.roll(F, -2, axis=i)
 ```
 
-# Leap-frog integrator
+## Leap-frog integrator
 The Leap-frog method is a generic method for solving Hamiltonian systems. We divide the integration into a *kick* and *drift* stage. In the Leap-frog method, the kicks happen in between the drifts.
 
 It is nice to write this part of the program in a formal way. We define an abstract `Vector` type, which will store the position and momentum variables.
@@ -279,7 +288,7 @@ def iterate_step(step: Stepper, halt: HaltingCondition, init: State[Vector]) -> 
     return state
 ```
 
-# Poisson solver
+## Poisson solver
 Now for the hardest bit. We need to solve the Poisson equation.
 
 ``` {.python #solver}
@@ -335,7 +344,7 @@ def momentumEquation(self, s: State[np.ndarray]) -> np.ndarray:
     return -acc / da
 ```
 
-# The Zeldovich Approximation
+## The Zeldovich Approximation
 To bootstrap the simulation, we need to create a set of particles and assign velocities. This is done using the Zeldovich Approximation.
 
 ``` {.python #initialization}
@@ -385,15 +394,13 @@ if __name__ == "__main__":
     iterate_step(stepper, lambda s: s.time > 4.0, state)
 ```
 
-# Constrained fields
+## Constrained fields
 The `nbody.cft` library computes Gaussian random fields, and you can specify constraints on these fields.
 
 # Plotting the phase-space submanifold
 Instead of plotting particles, it is very nice to see the structures from phase-space. We take the original ordering of the particles at time $a=0$, and triangulate that. Then we plot this triangulation as it folds and wrinkles when particles start to move.
 
 For this visualisation we use Matplotlib.
-
-
 
 ## The triangulation
 We split each grid volume cell into two triangles (upper and lower). The `box_triangles` function generates all triangles for a given `Box`. In this case we don't wrap around the edges, since that would make plotting a bit awkward.
