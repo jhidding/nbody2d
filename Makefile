@@ -18,7 +18,7 @@
 #
 # You should list the Markdown sources here in the order that they should
 # appear.
-input_files := lit/index.md
+input_files := lit/index.md lit/random-fields.md
 
 # Arguments to Pandoc; these are reasonable defaults
 pandoc_args += --template bootstrap/template.html
@@ -28,7 +28,8 @@ pandoc_args += --toc-depth 1
 pandoc_args += --filter pandoc-bootstrap
 pandoc_args += --filter pandoc-eqnos
 pandoc_args += --filter pandoc-fignos
-pandoc_args += -f markdown+multiline_tables+simple_tables
+pandoc_args += --citeproc
+pandoc_args += -f markdown+multiline_tables+simple_tables+citations
 
 # Load syntax definitions for languages that are not supported
 # by default. These XML files are in the format of the Kate editor.

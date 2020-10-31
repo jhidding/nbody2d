@@ -1,6 +1,10 @@
 ---
 title: 2D particle-mesh n-body code
 author: Johan Hidding
+bibliography: lit/ref.bib
+reference-section-title: References
+link-citations: true
+license: "[Apache 2](https://www.apache.org/licenses/LICENSE-2.0)"
 ---
 [![Entangled badge](https://img.shields.io/badge/entangled-Use%20the%20source!-%2300aeff)](https://entangled.github.io/)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4158731.svg)](https://doi.org/10.5281/zenodo.4158731)
@@ -30,6 +34,52 @@ Copyright 2015-2020 Johan Hidding; This code is licensed under the Apache licens
 
 ## Citation
 If you use this code in scientific publication, please cite it using [DOI:10.5281/zenodo.4158731](https://doi.org/10.5281/zenodo.4158731).
+
+# The math
+It would be a bit much to derive all equations here from first principles. If you need a good introductory text, I recommend Barbara yden's book "Introduction to Cosmology" [@Ryden2017] ([link to PDF](http://carina.fcaglp.unlp.edu.ar/extragalactica/Bibliografia/Ryden_IntroCosmo.pdf))
+The equations that gouvern the distribution of matter in the Universe are given by Newtons law for gravity. We assume gravity is the sole force responsible for forming strunctures in the Universe and that relativistic effects play a minor role. Moreover we will assume that this process is dominated by _dark matter_. The Newtonian field equation for gravity is the Poisson equation
+
+$$\nabla^2 \Phi = 4 \pi G \rho.$${#eq:poisson-proper}
+
+However, in an expanding Universe this equation changes slightly to
+
+$$\frac{1}{a^2} \nabla^2 \phi = 4 \pi G \rho_u \delta.$${#eq:poisson-comoving}
+
+Here $a$ is the Hubble expansion factor, $\delta$ the density perturbation
+
+$$\delta + 1 = \frac{\rho}{\rho_u},$${#eq:density-contrast}
+
+and $\phi$ is the potential perturbation. Similarly the Euler equation describing Newton's second law can be written in Lagrangian form as
+
+$$\partial_t(a \vec{v}) \big|_{q={\rm cst}} = -\nabla \phi.$${#eq:euler}
+
+Defining $v$ as the comoving velocity $v := a\dot{x}$. We have two sets of coordinates $q$ and $x$. $q$ being a label on a particle, telling it where it started at time $t = 0$.
+Then
+
+$$x = q + \int \frac{v}{a} {\rm d t}.$${#eq:particle-trajectory}
+
+We define a momentum $p := a^2 \dot{x} = a v$, and rewrite the factor of proportionality
+
+$$4 \pi G \rho_u = \frac{3H_0^2 \Omega_0}{2a^3},$${#eq:poisson-rewrite}
+
+so that the Poisson equation becomes
+
+$$a\nabla^2 \phi = \frac{3}{2} \Omega_m H_0^2 \delta,$${#eq:poisson-unitfree}
+
+and the Euler equation
+
+$$\dot{p} = - \nabla \phi.$${#eq:euler-comoving}
+
+To this we add the Friedman equation that describes the evolution of the expansion factor
+
+$$\dot{a} = H_0 a \sqrt{\Omega_{\Lambda} + \Omega_{m} a^{-3} + (1 - \Omega) a^{-2}}.$${#eq:friedman-1}
+
+Note that all time dependence in these equations is in the expansion factor $a(t)$, so we may express all time derivatives in terms of $a$.
+
+$$\dot{x} = \frac{p}{a^2}\quad \to \quad \partial_a x = \frac{p}{a^2 \dot{a}}$${#eq:position-a}
+$$\dot{p} = -\nabla \phi \quad \to \quad \partial_a p = - \frac{\nabla \phi}{\dot{a}}$${#eq:momentum-a}
+
+This means we do not need to solve the Friedman equation explicitly. Rather we use $a$ as integration variable and use the Friedman equation to determine the relevant derivative $\dot{a}$.
 
 # The simulation
 The code is structured in the following components:
@@ -105,9 +155,9 @@ def G(self):
     return 3./2 * self.OmegaM * self.H0**2
 ```
 
-We can now express the expansion factor as an initial value problem,
+The background cosmology is embodied by the Friedman equation
 
-$$\partial_t a(a) = H_0 a \sqrt{\Omega_{\Lambda} + \Omega_{m} a^{-3} + \Omega_{k} a^{-2}}.$${#eq:frw}
+$$\dot{a} = H_0 a \sqrt{\Omega_{\Lambda} + \Omega_{m} a^{-3} + (1 - \Omega) a^{-2}}.$${#eq:friedman-2}
 
 ``` {.python #cosmology-methods}
 def da(self, a):
@@ -116,6 +166,14 @@ def da(self, a):
             + self.OmegaM * a**-3 \
             + self.OmegaK * a**-2)
 ```
+
+Later on we will need the _growing mode_ solution for this universe.
+
+$$D(t) = H(t) \int_0^t \frac{{\rm d} t'}{a(t')^2 H(t')^2}$${#eq:growing-mode-t}
+
+We'd like to do the integration in terms of $a$, substituting ${\rm d}t = {\rm d}a/\dot{a}$.
+
+$$D(a) = \frac{\dot{a}}{a} \int_0^a \frac{{\rm d}a}{\dot{a}^3}$${#eq:growing-mode-a}
 
 For all cases that we're interested in, we can integrate this equation directly to obtain the growing mode solution. We cannot start the integration from $a=0$, but in the limit of $a \to 0$, we have that $D_{+} \approx a$.
 
