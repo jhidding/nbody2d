@@ -18,6 +18,9 @@ From project directory run
 
 Progress on simulation is plotted with Gnuplot. Results end up in `./data` directory.
 
+## Citation
+If you use this code in a scientific publication, please cite it using this DOI:[10.5281/zenodo.4158731](https://doi.org/10.5281/zenodo.4158731).
+
 ## Development
 I'm in the process of making this code literate. To edit the code, have [Entangled](https://entangled.github.io/) installed and running:
 
