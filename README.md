@@ -2,7 +2,7 @@
 [![Entangled badge](https://img.shields.io/badge/entangled-Use%20the%20source!-%2300aeff)](https://entangled.github.io/)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4158731.svg)](https://doi.org/10.5281/zenodo.4158731)
 
-![A sample simulation, three time steps; the bottom row is a zoom-in.](figures/x.collage.png)
+![A sample simulation, three time steps; the bottom row is a zoom-in.](docs/figures/x.collage.png)
 
 ## Install
 This code has the following dependencies:
