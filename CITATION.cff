@@ -1,0 +1,19 @@
+# YAML 1.2
+---
+abstract: "This is a 2d particle-mesh N-body code written in pure Python. It compute 2d cosmological structure formation for real-time visualisation in Gnuplot. Further documentation can be found at https://jhidding.github.io/nbody2d."
+authors: 
+  -
+    family-names: Hidding
+    given-names: Johan
+    orcid: "https://orcid.org/"
+cff-version: "1.1.0"
+date-released: 2020-10-30
+doi: "10.5281/zenodo.4158730"
+keywords: 
+  - cosmology
+  - "n-body"
+  - "particle-mesh"
+license: "Apache-2.0"
+message: "If you use this software, please cite it using these metadata."
+repository-code: "https://github.com/jhidding/nbody2d"
+title: "2D particle-mesh n-body code"
