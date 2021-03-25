@@ -1,3 +1,4 @@
+Pipfile.lock
 data/*.npy
 .*.swp
 __pycache__

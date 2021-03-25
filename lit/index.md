@@ -97,6 +97,7 @@ The code is structured in the following components:
 
 <<cosmology>>
 <<mass-deposition>>
+<<mass-deposition-numba>>
 <<interpolation>>
 <<integrator>>
 <<solver>>
@@ -111,11 +112,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 import numpy as np
 from scipy.integrate import quad
+import numba
 from .cft import Box
 from . import gnuplot as gp
 
 from abc import ABC, abstractmethod
-from typing import Generic, TypeVar, Callable
+from typing import Generic, TypeVar, Callable, Tuple
 from functools import partial
 ```
 
@@ -223,6 +225,21 @@ def md_cic(B: Box, X: np.ndarray) -> np.ndarray:
     rho += rho_
 
     return rho
+```
+
+### Numba implementation
+It may be more efficient to do the mass deposition using Numba.
+
+``` {.python #mass-deposition-numba}
+@numba.jit
+def md_cic_2d(shape: Tuple[int], pos: np.ndarray, tgt: np.ndarray):
+    for i in range(len(pos)):
+        idx0, idx1 = int(np.floor(pos[i,0])), int(np.floor(pos[i,1]))
+        f0, f1     = pos[i,0] - idx0, pos[i,1] - idx1
+        tgt[idx0 % shape[0], idx1 % shape[1]] += (1 - f0) * (1 - f1)
+        tgt[(idx0 + 1) % shape[0], idx1 % shape[1]] += f0 * (1 - f1)
+        tgt[idx0 % shape[0], (idx1 + 1) % shape[1]] += (1 - f0) * f1
+        tgt[(idx0 + 1) % shape[0], (idx1 + 1) % shape[1]] += f0 * f1
 ```
 
 ## Interpolation
@@ -351,14 +368,18 @@ Now for the hardest bit. We need to solve the Poisson equation.
 
 ``` {.python #solver}
 class PoissonVlasov(HamiltonianSystem[np.ndarray]):
-    def __init__(self, box, cosmology, particle_mass):
+    def __init__(self, box, cosmology, particle_mass, live_plot=False):
         self.box = box
         self.cosmology = cosmology
         self.particle_mass = particle_mass
-        self._g = gp.Gnuplot(persist=True)
-        self._g("set cbrange [0.2:50]", "set log cb", "set size square",
-                "set xrange [0:{0}] ; set yrange [0:{0}]".format(box.N))
-        self._g("set term x11")
+        self.delta = np.zeros(self.box.shape, dtype='f8')
+        if live_plot:
+            self._g = gp.Gnuplot(persist=True)
+            self._g("set cbrange [0.2:50]", "set log cb", "set size square",
+                    "set xrange [0:{0}] ; set yrange [0:{0}]".format(box.N))
+            self._g("set term x11")
+        else:
+            self._g = False
 
     <<position-equation>>
     <<momentum-equation>>
@@ -391,9 +412,16 @@ def momentumEquation(self, s: State[np.ndarray]) -> np.ndarray:
     a = s.time
     da = self.cosmology.da(a)
     x_grid = s.position / self.box.res
-    delta = md_cic(self.box, x_grid) * self.particle_mass - 1.0
-    self._g(gp.plot_data(gp.array(delta.T+1, "t'' w image")))
-    delta_f = np.fft.fftn(delta)
+    self.delta.fill(0.0)
+    md_cic_2d(self.box.shape, x_grid, self.delta)
+    self.delta *= self.particle_mass
+    self.delta -= 1.0
+
+    assert abs(self.delta.mean()) < 1e-6, "total mass should be normalised"
+
+    if self._g:
+        self._g(gp.plot_data(gp.array(self.delta.T+1, "t'' w image")))
+    delta_f = np.fft.fftn(self.delta)
     kernel = cft.Potential()(self.box.K)
     phi = np.fft.ifftn(delta_f * kernel).real * self.cosmology.G / a
     acc_x = Interp2D(gradient_2nd_order(phi, 0))
@@ -447,7 +475,7 @@ if __name__ == "__main__":
     force_box = cft.Box(2, N*2, B_m.L)
     za = Zeldovich(B_m, force_box, EdS, phi)
     state = za.state(0.02)
-    system = PoissonVlasov(force_box, EdS, za.particle_mass)
+    system = PoissonVlasov(force_box, EdS, za.particle_mass, live_plot=True)
     stepper = partial(leap_frog, 0.02, system)
     iterate_step(stepper, lambda s: s.time > 4.0, state)
 ```
