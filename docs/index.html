@@ -16,6 +16,7 @@
 pre > code.sourceCode { white-space: pre; position: relative; }
 pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
 div.sourceCode { margin: 1em 0; }
 pre.sourceCode { margin: 0; }
@@ -185,11 +186,12 @@ code span.wa { color: #8f5902; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="op">&lt;&lt;</span>cosmology<span class="op">&gt;&gt;</span></span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="op">&lt;&lt;</span>mass<span class="op">-</span>deposition<span class="op">&gt;&gt;</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="op">&lt;&lt;</span>interpolation<span class="op">&gt;&gt;</span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="op">&lt;&lt;</span>integrator<span class="op">&gt;&gt;</span></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="op">&lt;&lt;</span>solver<span class="op">&gt;&gt;</span></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="op">&lt;&lt;</span>initialization<span class="op">&gt;&gt;</span></span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="op">&lt;&lt;</span>main<span class="op">&gt;&gt;</span></span></code></pre></div>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="op">&lt;&lt;</span>mass<span class="op">-</span>deposition<span class="op">-</span>numba<span class="op">&gt;&gt;</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="op">&lt;&lt;</span>interpolation<span class="op">&gt;&gt;</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="op">&lt;&lt;</span>integrator<span class="op">&gt;&gt;</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="op">&lt;&lt;</span>solver<span class="op">&gt;&gt;</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="op">&lt;&lt;</span>initialization<span class="op">&gt;&gt;</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="op">&lt;&lt;</span>main<span class="op">&gt;&gt;</span></span></code></pre></div>
 </div>
 <p>Some things we will definitely need:</p>
 <div class="annotated-code">
@@ -198,12 +200,13 @@ code span.wa { color: #8f5902; font-weight: bold; font-style: italic; } /* Warni
 <span id="imports-2"><a href="#imports-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> dataclasses <span class="im">import</span> dataclass</span>
 <span id="imports-3"><a href="#imports-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="imports-4"><a href="#imports-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> scipy.integrate <span class="im">import</span> quad</span>
-<span id="imports-5"><a href="#imports-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> .cft <span class="im">import</span> Box</span>
-<span id="imports-6"><a href="#imports-6" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> . <span class="im">import</span> gnuplot <span class="im">as</span> gp</span>
-<span id="imports-7"><a href="#imports-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="imports-8"><a href="#imports-8" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> abc <span class="im">import</span> ABC, abstractmethod</span>
-<span id="imports-9"><a href="#imports-9" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> typing <span class="im">import</span> Generic, TypeVar, Callable</span>
-<span id="imports-10"><a href="#imports-10" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> functools <span class="im">import</span> partial</span></code></pre></div>
+<span id="imports-5"><a href="#imports-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numba</span>
+<span id="imports-6"><a href="#imports-6" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> .cft <span class="im">import</span> Box</span>
+<span id="imports-7"><a href="#imports-7" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> . <span class="im">import</span> gnuplot <span class="im">as</span> gp</span>
+<span id="imports-8"><a href="#imports-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="imports-9"><a href="#imports-9" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> abc <span class="im">import</span> ABC, abstractmethod</span>
+<span id="imports-10"><a href="#imports-10" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> typing <span class="im">import</span> Generic, TypeVar, Callable, Tuple</span>
+<span id="imports-11"><a href="#imports-11" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> functools <span class="im">import</span> partial</span></code></pre></div>
 </div>
 <h2 id="the-box">The Box</h2>
 <p>The <code>Box</code> class contains all information about the simulation box: mainly the size in pixels and the physical size it represents. All operations will assume periodic boundary conditions. In <code>numpy</code> this is achieved by using <code>np.roll</code> to shift a grid along a given axis.</p>
@@ -220,7 +223,7 @@ code span.wa { color: #8f5902; font-weight: bold; font-style: italic; } /* Warni
 <span id="cosmology-7"><a href="#cosmology-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">&lt;&lt;</span>cosmology<span class="op">-</span>methods<span class="op">&gt;&gt;</span></span></code></pre></div>
 </div>
 <p>From these parameters, we can compute the curvature,</p>
-<p><span id="eq:curvature" class="eqnos"><span class="math display">\[\Omega_k = 1 - \Omega_{m} - \Omega_{\Lambda},\]</span><span class="eqnos-number">(1)</span></span></p>
+<p><span id="eq:curvature" class="eqnos"><span class="math display">\[\Omega_k = 1 - \Omega_{m} - \Omega_{\Lambda},\]</span><span class="eqnos-number">(12)</span></span></p>
 <div class="annotated-code">
 <p><span><em>«cosmology-methods»=</em></span></p>
 <div class="sourceCode" id="cosmology-methods"><pre class="sourceCode python"><code class="sourceCode python"><span id="cosmology-methods-1"><a href="#cosmology-methods-1" aria-hidden="true" tabindex="-1"></a><span class="at">@property</span></span>
@@ -228,7 +231,7 @@ code span.wa { color: #8f5902; font-weight: bold; font-style: italic; } /* Warni
 <span id="cosmology-methods-3"><a href="#cosmology-methods-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="dv">1</span> <span class="op">-</span> <span class="va">self</span>.OmegaM <span class="op">-</span> <span class="va">self</span>.OmegaL</span></code></pre></div>
 </div>
 <p>and the (a?) gravitational constant,</p>
-<p><span id="eq:grav-const" class="eqnos"><span class="math display">\[G = \frac{3}{2} \Omega_{m} H_0^2.\]</span><span class="eqnos-number">(2)</span></span></p>
+<p><span id="eq:grav-const" class="eqnos"><span class="math display">\[G = \frac{3}{2} \Omega_{m} H_0^2.\]</span><span class="eqnos-number">(13)</span></span></p>
 <div class="annotated-code">
 <p><span><em>«cosmology-methods»+</em></span></p>
 <div class="sourceCode" id="cosmology-methods"><pre class="sourceCode python"><code class="sourceCode python"><span id="cosmology-methods-1"><a href="#cosmology-methods-1" aria-hidden="true" tabindex="-1"></a><span class="at">@property</span></span>
@@ -236,7 +239,7 @@ code span.wa { color: #8f5902; font-weight: bold; font-style: italic; } /* Warni
 <span id="cosmology-methods-3"><a href="#cosmology-methods-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fl">3.</span><span class="op">/</span><span class="dv">2</span> <span class="op">*</span> <span class="va">self</span>.OmegaM <span class="op">*</span> <span class="va">self</span>.H0<span class="op">**</span><span class="dv">2</span></span></code></pre></div>
 </div>
 <p>The background cosmology is embodied by the Friedman equation</p>
-<p><span id="eq:friedman-2" class="eqnos"><span class="math display">\[\dot{a} = H_0 a \sqrt{\Omega_{\Lambda} + \Omega_{m} a^{-3} + (1 - \Omega) a^{-2}}.\]</span><span class="eqnos-number">(3)</span></span></p>
+<p><span id="eq:friedman-2" class="eqnos"><span class="math display">\[\dot{a} = H_0 a \sqrt{\Omega_{\Lambda} + \Omega_{m} a^{-3} + (1 - \Omega) a^{-2}}.\]</span><span class="eqnos-number">(14)</span></span></p>
 <div class="annotated-code">
 <p><span><em>«cosmology-methods»+</em></span></p>
 <div class="sourceCode" id="cosmology-methods"><pre class="sourceCode python"><code class="sourceCode python"><span id="cosmology-methods-1"><a href="#cosmology-methods-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> da(<span class="va">self</span>, a):</span>
@@ -246,9 +249,9 @@ code span.wa { color: #8f5902; font-weight: bold; font-style: italic; } /* Warni
 <span id="cosmology-methods-5"><a href="#cosmology-methods-5" aria-hidden="true" tabindex="-1"></a>            <span class="op">+</span> <span class="va">self</span>.OmegaK <span class="op">*</span> a<span class="op">**-</span><span class="dv">2</span>)</span></code></pre></div>
 </div>
 <p>Later on we will need the <em>growing mode</em> solution for this universe.</p>
-<p><span id="eq:growing-mode-t" class="eqnos"><span class="math display">\[D(t) = H(t) \int_0^t \frac{{\rm d} t&#39;}{a(t&#39;)^2 H(t&#39;)^2}\]</span><span class="eqnos-number">(4)</span></span></p>
+<p><span id="eq:growing-mode-t" class="eqnos"><span class="math display">\[D(t) = H(t) \int_0^t \frac{{\rm d} t&#39;}{a(t&#39;)^2 H(t&#39;)^2}\]</span><span class="eqnos-number">(15)</span></span></p>
 <p>We’d like to do the integration in terms of <span class="math inline">\(a\)</span>, substituting <span class="math inline">\({\rm d}t = {\rm d}a/\dot{a}\)</span>.</p>
-<p><span id="eq:growing-mode-a" class="eqnos"><span class="math display">\[D(a) = \frac{\dot{a}}{a} \int_0^a \frac{{\rm d}a}{\dot{a}^3}\]</span><span class="eqnos-number">(5)</span></span></p>
+<p><span id="eq:growing-mode-a" class="eqnos"><span class="math display">\[D(a) = \frac{\dot{a}}{a} \int_0^a \frac{{\rm d}a}{\dot{a}^3}\]</span><span class="eqnos-number">(16)</span></span></p>
 <p>For all cases that we’re interested in, we can integrate this equation directly to obtain the growing mode solution. We cannot start the integration from <span class="math inline">\(a=0\)</span>, but in the limit of <span class="math inline">\(a \to 0\)</span>, we have that <span class="math inline">\(D_{+} \approx a\)</span>.</p>
 <div class="annotated-code">
 <p><span><em>«cosmology-methods»+</em></span></p>
@@ -295,6 +298,20 @@ code span.wa { color: #8f5902; font-weight: bold; font-style: italic; } /* Warni
 <span id="mass-deposition-22"><a href="#mass-deposition-22" aria-hidden="true" tabindex="-1"></a>    rho <span class="op">+=</span> rho_</span>
 <span id="mass-deposition-23"><a href="#mass-deposition-23" aria-hidden="true" tabindex="-1"></a></span>
 <span id="mass-deposition-24"><a href="#mass-deposition-24" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> rho</span></code></pre></div>
+</div>
+<h3 id="numba-implementation">Numba implementation</h3>
+<p>It may be more efficient to do the mass deposition using Numba.</p>
+<div class="annotated-code">
+<p><span><em>«mass-deposition-numba»=</em></span></p>
+<div class="sourceCode" id="mass-deposition-numba"><pre class="sourceCode python"><code class="sourceCode python"><span id="mass-deposition-numba-1"><a href="#mass-deposition-numba-1" aria-hidden="true" tabindex="-1"></a><span class="at">@numba.jit</span></span>
+<span id="mass-deposition-numba-2"><a href="#mass-deposition-numba-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> md_cic_2d(shape: Tuple[<span class="bu">int</span>], pos: np.ndarray, tgt: np.ndarray):</span>
+<span id="mass-deposition-numba-3"><a href="#mass-deposition-numba-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(pos)):</span>
+<span id="mass-deposition-numba-4"><a href="#mass-deposition-numba-4" aria-hidden="true" tabindex="-1"></a>        idx0, idx1 <span class="op">=</span> <span class="bu">int</span>(np.floor(pos[i,<span class="dv">0</span>])), <span class="bu">int</span>(np.floor(pos[i,<span class="dv">1</span>]))</span>
+<span id="mass-deposition-numba-5"><a href="#mass-deposition-numba-5" aria-hidden="true" tabindex="-1"></a>        f0, f1     <span class="op">=</span> pos[i,<span class="dv">0</span>] <span class="op">-</span> idx0, pos[i,<span class="dv">1</span>] <span class="op">-</span> idx1</span>
+<span id="mass-deposition-numba-6"><a href="#mass-deposition-numba-6" aria-hidden="true" tabindex="-1"></a>        tgt[idx0 <span class="op">%</span> shape[<span class="dv">0</span>], idx1 <span class="op">%</span> shape[<span class="dv">1</span>]] <span class="op">+=</span> (<span class="dv">1</span> <span class="op">-</span> f0) <span class="op">*</span> (<span class="dv">1</span> <span class="op">-</span> f1)</span>
+<span id="mass-deposition-numba-7"><a href="#mass-deposition-numba-7" aria-hidden="true" tabindex="-1"></a>        tgt[(idx0 <span class="op">+</span> <span class="dv">1</span>) <span class="op">%</span> shape[<span class="dv">0</span>], idx1 <span class="op">%</span> shape[<span class="dv">1</span>]] <span class="op">+=</span> f0 <span class="op">*</span> (<span class="dv">1</span> <span class="op">-</span> f1)</span>
+<span id="mass-deposition-numba-8"><a href="#mass-deposition-numba-8" aria-hidden="true" tabindex="-1"></a>        tgt[idx0 <span class="op">%</span> shape[<span class="dv">0</span>], (idx1 <span class="op">+</span> <span class="dv">1</span>) <span class="op">%</span> shape[<span class="dv">1</span>]] <span class="op">+=</span> (<span class="dv">1</span> <span class="op">-</span> f0) <span class="op">*</span> f1</span>
+<span id="mass-deposition-numba-9"><a href="#mass-deposition-numba-9" aria-hidden="true" tabindex="-1"></a>        tgt[(idx0 <span class="op">+</span> <span class="dv">1</span>) <span class="op">%</span> shape[<span class="dv">0</span>], (idx1 <span class="op">+</span> <span class="dv">1</span>) <span class="op">%</span> shape[<span class="dv">1</span>]] <span class="op">+=</span> f0 <span class="op">*</span> f1</span></code></pre></div>
 </div>
 <h2 id="interpolation">Interpolation</h2>
 <p>To read a value from a grid, given a particle position, we need to interpolate. This routine performs linear interpolation on the grid.</p>
@@ -413,20 +430,24 @@ code span.wa { color: #8f5902; font-weight: bold; font-style: italic; } /* Warni
 <div class="annotated-code">
 <p><span><em>«solver»=</em></span></p>
 <div class="sourceCode" id="solver"><pre class="sourceCode python"><code class="sourceCode python"><span id="solver-1"><a href="#solver-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> PoissonVlasov(HamiltonianSystem[np.ndarray]):</span>
-<span id="solver-2"><a href="#solver-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, box, cosmology, particle_mass):</span>
+<span id="solver-2"><a href="#solver-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, box, cosmology, particle_mass, live_plot<span class="op">=</span><span class="va">False</span>):</span>
 <span id="solver-3"><a href="#solver-3" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.box <span class="op">=</span> box</span>
 <span id="solver-4"><a href="#solver-4" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.cosmology <span class="op">=</span> cosmology</span>
 <span id="solver-5"><a href="#solver-5" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.particle_mass <span class="op">=</span> particle_mass</span>
-<span id="solver-6"><a href="#solver-6" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>._g <span class="op">=</span> gp.Gnuplot(persist<span class="op">=</span><span class="va">True</span>)</span>
-<span id="solver-7"><a href="#solver-7" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>._g(<span class="st">&quot;set cbrange [0.2:50]&quot;</span>, <span class="st">&quot;set log cb&quot;</span>, <span class="st">&quot;set size square&quot;</span>,</span>
-<span id="solver-8"><a href="#solver-8" aria-hidden="true" tabindex="-1"></a>                <span class="st">&quot;set xrange [0:</span><span class="sc">{0}</span><span class="st">] ; set yrange [0:</span><span class="sc">{0}</span><span class="st">]&quot;</span>.<span class="bu">format</span>(box.N))</span>
-<span id="solver-9"><a href="#solver-9" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>._g(<span class="st">&quot;set term x11&quot;</span>)</span>
-<span id="solver-10"><a href="#solver-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="solver-11"><a href="#solver-11" aria-hidden="true" tabindex="-1"></a>    <span class="op">&lt;&lt;</span>position<span class="op">-</span>equation<span class="op">&gt;&gt;</span></span>
-<span id="solver-12"><a href="#solver-12" aria-hidden="true" tabindex="-1"></a>    <span class="op">&lt;&lt;</span>momentum<span class="op">-</span>equation<span class="op">&gt;&gt;</span></span></code></pre></div>
+<span id="solver-6"><a href="#solver-6" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.delta <span class="op">=</span> np.zeros(<span class="va">self</span>.box.shape, dtype<span class="op">=</span><span class="st">&#39;f8&#39;</span>)</span>
+<span id="solver-7"><a href="#solver-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> live_plot:</span>
+<span id="solver-8"><a href="#solver-8" aria-hidden="true" tabindex="-1"></a>            <span class="va">self</span>._g <span class="op">=</span> gp.Gnuplot(persist<span class="op">=</span><span class="va">True</span>)</span>
+<span id="solver-9"><a href="#solver-9" aria-hidden="true" tabindex="-1"></a>            <span class="va">self</span>._g(<span class="st">&quot;set cbrange [0.2:50]&quot;</span>, <span class="st">&quot;set log cb&quot;</span>, <span class="st">&quot;set size square&quot;</span>,</span>
+<span id="solver-10"><a href="#solver-10" aria-hidden="true" tabindex="-1"></a>                    <span class="st">&quot;set xrange [0:</span><span class="sc">{0}</span><span class="st">] ; set yrange [0:</span><span class="sc">{0}</span><span class="st">]&quot;</span>.<span class="bu">format</span>(box.N))</span>
+<span id="solver-11"><a href="#solver-11" aria-hidden="true" tabindex="-1"></a>            <span class="va">self</span>._g(<span class="st">&quot;set term x11&quot;</span>)</span>
+<span id="solver-12"><a href="#solver-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span>:</span>
+<span id="solver-13"><a href="#solver-13" aria-hidden="true" tabindex="-1"></a>            <span class="va">self</span>._g <span class="op">=</span> <span class="va">False</span></span>
+<span id="solver-14"><a href="#solver-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="solver-15"><a href="#solver-15" aria-hidden="true" tabindex="-1"></a>    <span class="op">&lt;&lt;</span>position<span class="op">-</span>equation<span class="op">&gt;&gt;</span></span>
+<span id="solver-16"><a href="#solver-16" aria-hidden="true" tabindex="-1"></a>    <span class="op">&lt;&lt;</span>momentum<span class="op">-</span>equation<span class="op">&gt;&gt;</span></span></code></pre></div>
 </div>
 <p>The position equation:</p>
-<p><span id="eq:position" class="eqnos"><span class="math display">\[\partial_a x = \frac{p}{a^2 \dot{a}}\]</span><span class="eqnos-number">(6)</span></span></p>
+<p><span id="eq:position" class="eqnos"><span class="math display">\[\partial_a x = \frac{p}{a^2 \dot{a}}\]</span><span class="eqnos-number">(17)</span></span></p>
 <div class="annotated-code">
 <p><span><em>«position-equation»=</em></span></p>
 <div class="sourceCode" id="position-equation"><pre class="sourceCode python"><code class="sourceCode python"><span id="position-equation-1"><a href="#position-equation-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> positionEquation(<span class="va">self</span>, s: State[np.ndarray]) <span class="op">-&gt;</span> np.ndarray:</span>
@@ -435,9 +456,9 @@ code span.wa { color: #8f5902; font-weight: bold; font-style: italic; } /* Warni
 <span id="position-equation-4"><a href="#position-equation-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> s.momentum <span class="op">/</span> (s.time<span class="op">**</span><span class="dv">2</span> <span class="op">*</span> da)</span></code></pre></div>
 </div>
 <p>The momentum equation:</p>
-<p><span id="eq:momentum" class="eqnos"><span class="math display">\[\partial_a p = -\frac{1}{\dot{a}} \nabla \Phi,\]</span><span class="eqnos-number">(7)</span></span></p>
+<p><span id="eq:momentum" class="eqnos"><span class="math display">\[\partial_a p = -\frac{1}{\dot{a}} \nabla \Phi,\]</span><span class="eqnos-number">(18)</span></span></p>
 <p>where</p>
-<p><span id="eq:poisson" class="eqnos"><span class="math display">\[\nabla^2 \Phi = \frac{G}{a} \delta.\]</span><span class="eqnos-number">(8)</span></span></p>
+<p><span id="eq:poisson" class="eqnos"><span class="math display">\[\nabla^2 \Phi = \frac{G}{a} \delta.\]</span><span class="eqnos-number">(19)</span></span></p>
 <p>We first compute <span class="math inline">\(\delta\)</span> using the cloud-in-cell mass deposition <code>md_cic()</code> function. Then we integrate twice by method of Fourier transform. To compute the accelleration we take the second-order approximation of the gradient function.</p>
 <div class="annotated-code">
 <p><span><em>«momentum-equation»=</em></span></p>
@@ -445,15 +466,22 @@ code span.wa { color: #8f5902; font-weight: bold; font-style: italic; } /* Warni
 <span id="momentum-equation-2"><a href="#momentum-equation-2" aria-hidden="true" tabindex="-1"></a>    a <span class="op">=</span> s.time</span>
 <span id="momentum-equation-3"><a href="#momentum-equation-3" aria-hidden="true" tabindex="-1"></a>    da <span class="op">=</span> <span class="va">self</span>.cosmology.da(a)</span>
 <span id="momentum-equation-4"><a href="#momentum-equation-4" aria-hidden="true" tabindex="-1"></a>    x_grid <span class="op">=</span> s.position <span class="op">/</span> <span class="va">self</span>.box.res</span>
-<span id="momentum-equation-5"><a href="#momentum-equation-5" aria-hidden="true" tabindex="-1"></a>    delta <span class="op">=</span> md_cic(<span class="va">self</span>.box, x_grid) <span class="op">*</span> <span class="va">self</span>.particle_mass <span class="op">-</span> <span class="fl">1.0</span></span>
-<span id="momentum-equation-6"><a href="#momentum-equation-6" aria-hidden="true" tabindex="-1"></a>    <span class="va">self</span>._g(gp.plot_data(gp.array(delta.T<span class="op">+</span><span class="dv">1</span>, <span class="st">&quot;t&#39;&#39; w image&quot;</span>)))</span>
-<span id="momentum-equation-7"><a href="#momentum-equation-7" aria-hidden="true" tabindex="-1"></a>    delta_f <span class="op">=</span> np.fft.fftn(delta)</span>
-<span id="momentum-equation-8"><a href="#momentum-equation-8" aria-hidden="true" tabindex="-1"></a>    kernel <span class="op">=</span> cft.Potential()(<span class="va">self</span>.box.K)</span>
-<span id="momentum-equation-9"><a href="#momentum-equation-9" aria-hidden="true" tabindex="-1"></a>    phi <span class="op">=</span> np.fft.ifftn(delta_f <span class="op">*</span> kernel).real <span class="op">*</span> <span class="va">self</span>.cosmology.G <span class="op">/</span> a</span>
-<span id="momentum-equation-10"><a href="#momentum-equation-10" aria-hidden="true" tabindex="-1"></a>    acc_x <span class="op">=</span> Interp2D(gradient_2nd_order(phi, <span class="dv">0</span>))</span>
-<span id="momentum-equation-11"><a href="#momentum-equation-11" aria-hidden="true" tabindex="-1"></a>    acc_y <span class="op">=</span> Interp2D(gradient_2nd_order(phi, <span class="dv">1</span>))</span>
-<span id="momentum-equation-12"><a href="#momentum-equation-12" aria-hidden="true" tabindex="-1"></a>    acc <span class="op">=</span> np.c_[acc_x(x_grid), acc_y(x_grid)] <span class="op">/</span> <span class="va">self</span>.box.res</span>
-<span id="momentum-equation-13"><a href="#momentum-equation-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="op">-</span>acc <span class="op">/</span> da</span></code></pre></div>
+<span id="momentum-equation-5"><a href="#momentum-equation-5" aria-hidden="true" tabindex="-1"></a>    <span class="va">self</span>.delta.fill(<span class="fl">0.0</span>)</span>
+<span id="momentum-equation-6"><a href="#momentum-equation-6" aria-hidden="true" tabindex="-1"></a>    md_cic_2d(<span class="va">self</span>.box.shape, x_grid, <span class="va">self</span>.delta)</span>
+<span id="momentum-equation-7"><a href="#momentum-equation-7" aria-hidden="true" tabindex="-1"></a>    <span class="va">self</span>.delta <span class="op">*=</span> <span class="va">self</span>.particle_mass</span>
+<span id="momentum-equation-8"><a href="#momentum-equation-8" aria-hidden="true" tabindex="-1"></a>    <span class="va">self</span>.delta <span class="op">-=</span> <span class="fl">1.0</span></span>
+<span id="momentum-equation-9"><a href="#momentum-equation-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="momentum-equation-10"><a href="#momentum-equation-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">assert</span> <span class="bu">abs</span>(<span class="va">self</span>.delta.mean()) <span class="op">&lt;</span> <span class="fl">1e-6</span>, <span class="st">&quot;total mass should be normalised&quot;</span></span>
+<span id="momentum-equation-11"><a href="#momentum-equation-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="momentum-equation-12"><a href="#momentum-equation-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="va">self</span>._g:</span>
+<span id="momentum-equation-13"><a href="#momentum-equation-13" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>._g(gp.plot_data(gp.array(<span class="va">self</span>.delta.T<span class="op">+</span><span class="dv">1</span>, <span class="st">&quot;t&#39;&#39; w image&quot;</span>)))</span>
+<span id="momentum-equation-14"><a href="#momentum-equation-14" aria-hidden="true" tabindex="-1"></a>    delta_f <span class="op">=</span> np.fft.fftn(<span class="va">self</span>.delta)</span>
+<span id="momentum-equation-15"><a href="#momentum-equation-15" aria-hidden="true" tabindex="-1"></a>    kernel <span class="op">=</span> cft.Potential()(<span class="va">self</span>.box.K)</span>
+<span id="momentum-equation-16"><a href="#momentum-equation-16" aria-hidden="true" tabindex="-1"></a>    phi <span class="op">=</span> np.fft.ifftn(delta_f <span class="op">*</span> kernel).real <span class="op">*</span> <span class="va">self</span>.cosmology.G <span class="op">/</span> a</span>
+<span id="momentum-equation-17"><a href="#momentum-equation-17" aria-hidden="true" tabindex="-1"></a>    acc_x <span class="op">=</span> Interp2D(gradient_2nd_order(phi, <span class="dv">0</span>))</span>
+<span id="momentum-equation-18"><a href="#momentum-equation-18" aria-hidden="true" tabindex="-1"></a>    acc_y <span class="op">=</span> Interp2D(gradient_2nd_order(phi, <span class="dv">1</span>))</span>
+<span id="momentum-equation-19"><a href="#momentum-equation-19" aria-hidden="true" tabindex="-1"></a>    acc <span class="op">=</span> np.c_[acc_x(x_grid), acc_y(x_grid)] <span class="op">/</span> <span class="va">self</span>.box.res</span>
+<span id="momentum-equation-20"><a href="#momentum-equation-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="op">-</span>acc <span class="op">/</span> da</span></code></pre></div>
 </div>
 <h2 id="the-zeldovich-approximation">The Zeldovich Approximation</h2>
 <p>To bootstrap the simulation, we need to create a set of particles and assign velocities. This is done using the Zeldovich Approximation.</p>
@@ -499,7 +527,7 @@ code span.wa { color: #8f5902; font-weight: bold; font-style: italic; } /* Warni
 <span id="main-12"><a href="#main-12" aria-hidden="true" tabindex="-1"></a>    force_box <span class="op">=</span> cft.Box(<span class="dv">2</span>, N<span class="op">*</span><span class="dv">2</span>, B_m.L)</span>
 <span id="main-13"><a href="#main-13" aria-hidden="true" tabindex="-1"></a>    za <span class="op">=</span> Zeldovich(B_m, force_box, EdS, phi)</span>
 <span id="main-14"><a href="#main-14" aria-hidden="true" tabindex="-1"></a>    state <span class="op">=</span> za.state(<span class="fl">0.02</span>)</span>
-<span id="main-15"><a href="#main-15" aria-hidden="true" tabindex="-1"></a>    system <span class="op">=</span> PoissonVlasov(force_box, EdS, za.particle_mass)</span>
+<span id="main-15"><a href="#main-15" aria-hidden="true" tabindex="-1"></a>    system <span class="op">=</span> PoissonVlasov(force_box, EdS, za.particle_mass, live_plot<span class="op">=</span><span class="va">True</span>)</span>
 <span id="main-16"><a href="#main-16" aria-hidden="true" tabindex="-1"></a>    stepper <span class="op">=</span> partial(leap_frog, <span class="fl">0.02</span>, system)</span>
 <span id="main-17"><a href="#main-17" aria-hidden="true" tabindex="-1"></a>    iterate_step(stepper, <span class="kw">lambda</span> s: s.time <span class="op">&gt;</span> <span class="fl">4.0</span>, state)</span></code></pre></div>
 </div>
@@ -525,7 +553,7 @@ code span.wa { color: #8f5902; font-weight: bold; font-style: italic; } /* Warni
 </div>
 <h2 id="density">Density</h2>
 <p>To compute the density on the triangulation we take the inverse of each triangle’s area. The area of a triangle can be computed using the formula,</p>
-<p><span id="eq:triangle-area" class="eqnos"><span class="math display">\[A = \frac{1}{2}(x_1 y_2 + x_2 y_3 + x_3 y_0 - x_2 y_1 - x_3 y_2 - x_0 y_3).\]</span><span class="eqnos-number">(1)</span></span></p>
+<p><span id="eq:triangle-area" class="eqnos"><span class="math display">\[A = \frac{1}{2}(x_1 y_2 + x_2 y_3 + x_3 y_0 - x_2 y_1 - x_3 y_2 - x_0 y_3).\]</span><span class="eqnos-number">(20)</span></span></p>
 <div class="annotated-code">
 <p><span><em>«triangle-area»=</em></span></p>
 <div class="sourceCode" id="triangle-area"><pre class="sourceCode python"><code class="sourceCode python"><span id="triangle-area-1"><a href="#triangle-area-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> triangle_area(x, y, t):</span>

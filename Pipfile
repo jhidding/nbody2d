@@ -8,6 +8,9 @@ numpy = "*"
 scipy = "*"
 numba = "*"
 matplotlib = "*"
+entangled-filters = "*"
+pandoc-eqnos = "*"
+pandoc-fignos = "*"
 
 [dev-packages]
 
