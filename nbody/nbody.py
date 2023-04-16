@@ -1,6 +1,6 @@
 # ~\~ language=Python filename=nbody/nbody.py
-# ~\~ begin <<lit/index.md|nbody/nbody.py>>[0]
-# ~\~ begin <<lit/index.md|imports>>[0]
+# ~\~ begin <<lit/index.md|nbody/nbody.py>>[init]
+# ~\~ begin <<lit/index.md|imports>>[init]
 from __future__ import annotations
 from dataclasses import dataclass
 import numpy as np
@@ -14,14 +14,14 @@ from typing import Generic, TypeVar, Callable, Tuple
 from functools import partial
 # ~\~ end
 
-# ~\~ begin <<lit/index.md|cosmology>>[0]
+# ~\~ begin <<lit/index.md|cosmology>>[init]
 @dataclass
 class Cosmology:
     H0 : float
     OmegaM : float
     OmegaL : float
 
-    # ~\~ begin <<lit/index.md|cosmology-methods>>[0]
+    # ~\~ begin <<lit/index.md|cosmology-methods>>[init]
     @property
     def OmegaK(self):
         return 1 - self.OmegaM - self.OmegaL
@@ -53,7 +53,7 @@ class Cosmology:
 LCDM = Cosmology(68.0, 0.31, 0.69)
 EdS = Cosmology(70.0, 1.0, 0.0)
 # ~\~ end
-# ~\~ begin <<lit/index.md|mass-deposition>>[0]
+# ~\~ begin <<lit/index.md|mass-deposition>>[init]
 def md_cic(B: Box, X: np.ndarray) -> np.ndarray:
     """Takes a 2*M array of particle positions and returns an array of shape
     `B.shape`. The result is a density field computed by cloud-in-cell method."""
@@ -79,7 +79,7 @@ def md_cic(B: Box, X: np.ndarray) -> np.ndarray:
 
     return rho
 # ~\~ end
-# ~\~ begin <<lit/index.md|mass-deposition-numba>>[0]
+# ~\~ begin <<lit/index.md|mass-deposition-numba>>[init]
 @numba.jit
 def md_cic_2d(shape: Tuple[int], pos: np.ndarray, tgt: np.ndarray):
     for i in range(len(pos)):
@@ -90,7 +90,7 @@ def md_cic_2d(shape: Tuple[int], pos: np.ndarray, tgt: np.ndarray):
         tgt[idx0 % shape[0], (idx1 + 1) % shape[1]] += (1 - f0) * f1
         tgt[(idx0 + 1) % shape[0], (idx1 + 1) % shape[1]] += f0 * f1
 # ~\~ end
-# ~\~ begin <<lit/index.md|interpolation>>[0]
+# ~\~ begin <<lit/index.md|interpolation>>[init]
 class Interp2D:
     "Reasonably fast bilinear interpolation routine"
     def __init__(self, data):
@@ -117,7 +117,7 @@ def gradient_2nd_order(F, i):
     return   1./12 * np.roll(F,  2, axis=i) - 2./3  * np.roll(F,  1, axis=i) \
            + 2./3  * np.roll(F, -1, axis=i) - 1./12 * np.roll(F, -2, axis=i)
 # ~\~ end
-# ~\~ begin <<lit/index.md|integrator>>[0]
+# ~\~ begin <<lit/index.md|integrator>>[init]
 class VectorABC(ABC):
     @abstractmethod
     def __add__(self, other: Vector) -> Vector:
@@ -138,7 +138,7 @@ class State(Generic[Vector]):
     position : Vector
     momentum : Vector
 
-    # ~\~ begin <<lit/index.md|state-methods>>[0]
+    # ~\~ begin <<lit/index.md|state-methods>>[init]
     def kick(self, dt: float, h: HamiltonianSystem[Vector]) -> State[Vector]:
         self.momentum += dt * h.momentumEquation(self)
         return self
@@ -182,7 +182,7 @@ def iterate_step(step: Stepper, halt: HaltingCondition, init: State[Vector]) -> 
             np.save(f, state.momentum)
     return state
 # ~\~ end
-# ~\~ begin <<lit/index.md|solver>>[0]
+# ~\~ begin <<lit/index.md|solver>>[init]
 class PoissonVlasov(HamiltonianSystem[np.ndarray]):
     def __init__(self, box, cosmology, particle_mass, live_plot=False):
         self.box = box
@@ -197,13 +197,13 @@ class PoissonVlasov(HamiltonianSystem[np.ndarray]):
         else:
             self._g = False
 
-    # ~\~ begin <<lit/index.md|position-equation>>[0]
+    # ~\~ begin <<lit/index.md|position-equation>>[init]
     def positionEquation(self, s: State[np.ndarray]) -> np.ndarray:
         a = s.time
         da = self.cosmology.da(a)
         return s.momentum / (s.time**2 * da)
     # ~\~ end
-    # ~\~ begin <<lit/index.md|momentum-equation>>[0]
+    # ~\~ begin <<lit/index.md|momentum-equation>>[init]
     def momentumEquation(self, s: State[np.ndarray]) -> np.ndarray:
         a = s.time
         da = self.cosmology.da(a)
@@ -226,7 +226,7 @@ class PoissonVlasov(HamiltonianSystem[np.ndarray]):
         return -acc / da
     # ~\~ end
 # ~\~ end
-# ~\~ begin <<lit/index.md|initialization>>[0]
+# ~\~ begin <<lit/index.md|initialization>>[init]
 def a2r(B, X):
     return X.transpose([1,2,0]).reshape([B.N**2, 2])
 
@@ -250,7 +250,7 @@ class Zeldovich:
     def particle_mass(self):
         return (self.bf.N / self.bm.N)**self.bm.dim
 # ~\~ end
-# ~\~ begin <<lit/index.md|main>>[0]
+# ~\~ begin <<lit/index.md|main>>[init]
 if __name__ == "__main__":
     from . import cft
 

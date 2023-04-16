@@ -1,5 +1,5 @@
 # ~\~ language=Python filename=nbody/phase_plot.py
-# ~\~ begin <<lit/index.md|nbody/phase_plot.py>>[0]
+# ~\~ begin <<lit/index.md|nbody/phase_plot.py>>[init]
 from matplotlib import pyplot as plt
 from matplotlib import rcParams
 
@@ -8,7 +8,7 @@ from nbody.cft import Box
 
 rcParams["font.family"] = "serif"
 
-# ~\~ begin <<lit/index.md|create-triangulation>>[0]
+# ~\~ begin <<lit/index.md|create-triangulation>>[init]
 def box_triangles(box):
     idx = np.arange(box.size, dtype=int).reshape(box.shape)
 
@@ -20,12 +20,12 @@ def box_triangles(box):
     lower_triangles = np.array([x3, x2, x1]).transpose([1,2,0]).reshape([-1,3])
     return np.r_[upper_triangles, lower_triangles]
 # ~\~ end
-# ~\~ begin <<lit/index.md|triangle-area>>[0]
+# ~\~ begin <<lit/index.md|triangle-area>>[init]
 def triangle_area(x, y, t):
     return (x[t[:,0]] * y[t[:,1]] + x[t[:,1]] * y[t[:,2]] + x[t[:,2]] * y[t[:,0]] \
           - x[t[:,1]] * y[t[:,0]] - x[t[:,2]] * y[t[:,1]] - x[t[:,0]] * y[t[:,2]]) / 2
 # ~\~ end
-# ~\~ begin <<lit/index.md|phase-space-plot>>[0]
+# ~\~ begin <<lit/index.md|phase-space-plot>>[init]
 def plot_for_time(box, triangles, time, bbox=[(5,45), (5,45)], fig=None, ax=None):
     fn = 'data/x.{0:05d}.npy'.format(int(round(time*1000)))
     with open(fn, "rb") as f:
