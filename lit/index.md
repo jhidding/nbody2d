@@ -36,7 +36,7 @@ Copyright 2015-2020 Johan Hidding; This code is licensed under the Apache licens
 If you use this code in scientific publication, please cite it using [DOI:10.5281/zenodo.4158731](https://doi.org/10.5281/zenodo.4158731).
 
 # The math
-It would be a bit much to derive all equations here from first principles. If you need a good introductory text, I recommend Barbara yden's book "Introduction to Cosmology" [@Ryden2017] ([link to PDF](http://carina.fcaglp.unlp.edu.ar/extragalactica/Bibliografia/Ryden_IntroCosmo.pdf))
+It would be a bit much to derive all equations here from first principles. If you need a good introductory text, I recommend Barbara Ryden's book "Introduction to Cosmology" [@Ryden2017] ([link to PDF](http://carina.fcaglp.unlp.edu.ar/extragalactica/Bibliografia/Ryden_IntroCosmo.pdf))
 The equations that gouvern the distribution of matter in the Universe are given by Newtons law for gravity. We assume gravity is the sole force responsible for forming strunctures in the Universe and that relativistic effects play a minor role. Moreover we will assume that this process is dominated by _dark matter_. The Newtonian field equation for gravity is the Poisson equation
 
 $$\nabla^2 \Phi = 4 \pi G \rho.$${#eq:poisson-proper}

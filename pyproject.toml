@@ -1,14 +1,14 @@
 [tool.poetry]
-name = "nbody2d"
+name = "nbody"
 version = "0.1.0"
 description = "A 2d PM N-body code for cosmological structure formation"
 authors = ["Johan Hidding <j.hidding@esciencecenter.nl>"]
 license = "Apache 2.0"
 
 [tool.poetry.dependencies]
-python = ">=3.9, <3.11"
+python = ">=3.9, <3.14"
 scipy = "^1.10.1"
-numba = "^0.56.4"
+numba = "^0.59"
 matplotlib = "^3.7.1"
 
 [tool.poetry.dev-dependencies]
